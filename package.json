@@ -1,0 +1,26 @@
+{
+  "name": "testsite",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --webpack --hostname localhost --port 3000",
+    "dev:turbo": "next dev --turbopack --hostname localhost --port 3000",
+    "build": "next build",
+    "start": "next start --hostname localhost --port 3000"
+  },
+  "dependencies": {
+    "framer-motion": "^12.38.0",
+    "gsap": "^3.15.0",
+    "lucide-react": "^1.14.0",
+    "next": "16.2.6",
+    "next-auth": "^4.24.14",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "tailwindcss": "^4"
+  }
+}
