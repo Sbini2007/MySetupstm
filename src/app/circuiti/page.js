@@ -64,9 +64,10 @@ export default function CircuitiPage() {
                 <div className="flex items-center gap-2 rounded-full border border-white/8 bg-black/20 px-2 py-1.5 shadow-inner shadow-white/[0.04]">
                   <Image
                     src={`/flags/${track.flagCode}.svg`}
-                    alt={track.country}
-                    width={28}
-                    height={20}
+                    alt=""
+                    width={34}
+                    height={24}
+                    style={{ width: "auto", height: "auto" }}
                     className="h-5 w-7 rounded-sm object-cover shadow-sm ring-1 ring-white/10"
                   />
                   <span className="text-[8px] font-bold uppercase tracking-[0.18em] text-white/60">{track.country}</span>
