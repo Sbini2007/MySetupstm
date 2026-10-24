@@ -6,7 +6,6 @@ import Link from "next/link";
 import Image from "next/image";
 import {
   X,
-  Search,
   User,
   LogOut,
   ArrowUpRight,
@@ -15,7 +14,6 @@ import {
   MessageSquare,
 } from "lucide-react";
 import logoImg from "@/assets/images/logo.png";
-import { tracks } from "@/lib/data";
 import { useAuth } from "@/lib/client-auth";
 import "./StaggeredMenu.css";
 
@@ -23,8 +21,6 @@ export default function NavBar() {
   const { user, logout } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
@@ -38,15 +34,10 @@ export default function NavBar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Keyboard shortcut: ⌘K to search, Escape to close
+  // Escape closes the open menu.
   useEffect(() => {
     const handleKey = (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-        e.preventDefault();
-        setSearchOpen((prev) => !prev);
-      }
       if (e.key === "Escape") {
-        setSearchOpen(false);
         setMenuOpen(false);
       }
     };
@@ -72,13 +63,6 @@ export default function NavBar() {
     window.addEventListener("mysetups_toggle_menu", onToggleEvent);
     return () => window.removeEventListener("mysetups_toggle_menu", onToggleEvent);
   }, []);
-
-  const searchResults = tracks.filter(
-    (tr) =>
-      searchQuery &&
-      (tr.circuit.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tr.country.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
 
   const navItems = [
     { label: "Home", href: "/", isExternal: false },
@@ -160,20 +144,6 @@ export default function NavBar() {
 
           {/* Right Action Buttons */}
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* Quick Search Button */}
-            <button
-              type="button"
-              onClick={() => setSearchOpen(true)}
-              className="inline-flex items-center gap-2 rounded-xl border border-violet-400/[0.14] bg-violet-500/[0.05] px-3 py-2 text-xs text-zinc-300 transition hover:border-violet-400/35 hover:bg-violet-500/[0.1] hover:text-white cursor-pointer"
-              aria-label="Cerca nel sito"
-            >
-              <Search size={14} />
-              <span className="hidden sm:inline font-medium">Cerca</span>
-              <kbd className="hidden sm:inline rounded bg-white/[0.08] px-1.5 py-0.5 text-[10px] text-zinc-400 font-mono">
-                ⌘K
-              </kbd>
-            </button>
-
             {/* Desktop Account Badge / Logout */}
             {mounted && user ? (
               <div className="hidden sm:flex items-center gap-2">
@@ -369,79 +339,6 @@ export default function NavBar() {
           document.body
         )}
 
-      {/* ================= SEARCH MODAL (⌘K) ================= */}
-      {mounted &&
-        searchOpen &&
-        typeof document !== "undefined" &&
-        createPortal(
-          <div
-            className="fixed inset-0 z-[9999999] flex items-start justify-center bg-black/80 backdrop-blur-md pt-20 px-4"
-            onClick={() => setSearchOpen(false)}
-          >
-            <div
-              className="w-full max-w-lg rounded-2xl border border-white/15 bg-[#0c0d16] p-4 shadow-2xl animate-in fade-in zoom-in-95 duration-150"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center gap-3 border-b border-white/[0.08] pb-3">
-                <Search size={16} className="text-zinc-400" />
-                <input
-                  type="text"
-                  autoFocus
-                  placeholder="Cerca circuito o nazione (es. Monza, Spa, Bahrain)..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-transparent text-sm text-white placeholder-zinc-500 outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={() => setSearchOpen(false)}
-                  className="text-xs text-zinc-400 hover:text-white cursor-pointer px-2 py-1 rounded bg-white/[0.06]"
-                >
-                  Esc
-                </button>
-              </div>
-
-              <div className="mt-3 max-h-72 overflow-y-auto space-y-1">
-                {searchResults.length === 0 ? (
-                  <p className="py-6 text-center text-xs text-zinc-500">
-                    {searchQuery
-                      ? "Nessun circuito trovato"
-                      : "Digita per cercare tra i 24 circuiti F1 26"}
-                  </p>
-                ) : (
-                  searchResults.map((tr) => (
-                    <Link
-                      key={tr.slug}
-                      href={`/setups`}
-                      onClick={() => setSearchOpen(false)}
-                      className="flex items-center justify-between rounded-xl px-3 py-2.5 text-xs text-zinc-200 hover:bg-white/[0.06] hover:text-white transition"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <Image
-                          src={`/flags/${tr.flagCode}.svg`}
-                          alt=""
-                          width={18}
-                          height={12}
-                          className="rounded-[2px] object-cover"
-                        />
-                        <span className="font-semibold text-white">
-                          {tr.circuit}
-                        </span>
-                        <span className="text-zinc-400 font-mono">
-                          ({tr.country})
-                        </span>
-                      </div>
-                      <span className="text-[10px] font-mono text-violet-400 uppercase">
-                        Visualizza Assetto →
-                      </span>
-                    </Link>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
     </>
   );
 }
