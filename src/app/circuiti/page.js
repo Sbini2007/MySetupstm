@@ -28,7 +28,7 @@ export default function CircuitiPage() {
               </h1>
               <p className="mt-4 max-w-xl text-sm leading-7 text-white/65 sm:text-base">
                 Apri una pista per vedere i setup <strong className="text-white">Gara</strong>, <strong className="text-white">Qualifica</strong> e{" "}
-                <strong className="text-white">Bagnato</strong> con account premium.
+                <strong className="text-white">Bagnato</strong>, se abilitati per il tuo account.
               </p>
             </div>
 

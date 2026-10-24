@@ -1,245 +1,362 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useMemo, useEffect } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
+import logoImg from "@/assets/images/logo.png";
+import { useSession } from "@/lib/client-auth";
 import {
-  BookOpen,
+  Search,
+  ArrowRight,
+  Sliders,
+  Wind,
+  Disc,
+  Copy,
   Check,
-  ChevronRight,
-  Circle,
-  Download,
-  Headphones,
-  Quote,
-  Settings,
-  Shield,
-  Star,
+  Flame,
   Trophy,
-  Zap,
+  ArrowUpRight,
+  Clock,
+  MessageSquare,
+  Users,
 } from "lucide-react";
 import NavBar from "@/components/NavBar";
-import { useLanguage } from "@/lib/i18n";
-import { pricing, reviews } from "@/lib/data";
+import Footer from "@/components/Footer";
+import AnimatedList from "@/components/AnimatedList";
+import SetupDisplay from "@/components/SetupDisplay";
+import { tracks } from "@/lib/data";
+import { SETUP_TABS } from "@/lib/setup-sections";
+import { safeFetchJson } from "@/lib/safe-json";
 
-export default function Home() {
-  const { t } = useLanguage();
-  const { status } = useSession();
-  const isAuthenticated = status === "authenticated";
+export default function HomePage() {
+  const { data: session } = useSession();
+  const [search, setSearch] = useState("");
+  const [selectedSlug, setSelectedSlug] = useState("italy-monza");
+  const [latestUpdate, setLatestUpdate] = useState(null);
+  const [currentSetup, setCurrentSetup] = useState(null);
+  const [isAuthorized, setIsAuthorized] = useState(null);
 
-  const featureCards = [
-    {
-      icon: Trophy,
-      title: t("esportsPerformance"),
-      text: t("esportsPerformanceDesc"),
-    },
-    {
-      icon: Headphones,
-      title: t("premiumSupport"),
-      text: t("premiumSupportDesc"),
-    },
-    {
-      icon: BookOpen,
-      title: t("setupGuides"),
-      text: t("setupGuidesDesc"),
-    },
-  ];
-  const [latestTrack, setLatestTrack] = useState(null);
-
+  // Fetch latest track update dynamically
   useEffect(() => {
-    const loadLatest = async () => {
-      try {
-        const response = await fetch("/api/setups/latest", { cache: "no-store" });
-        const data = await response.json();
-        setLatestTrack(data?.track || null);
-      } catch {
-        setLatestTrack(null);
-      }
-    };
-
-    loadLatest();
-    const timer = setInterval(loadLatest, 15000);
-    return () => clearInterval(timer);
+    safeFetchJson("/api/setups/latest", { cache: "no-store" }).then((d) => {
+      if (d?.track) setLatestUpdate(d.track);
+    });
   }, []);
 
+  // Fetch or load setup for selected track with instant fallback & live admin sync
+  useEffect(() => {
+    if (!selectedSlug) return;
+    setCurrentSetup(null);
+    setIsAuthorized(null);
+    const fetchSetup = () => {
+      safeFetchJson(`/api/setups/${selectedSlug}`, { cache: "no-store" }).then((data) => {
+        if (data) {
+          setIsAuthorized(data.isAuthorized);
+          setCurrentSetup(data.isAuthorized ? data.setup : null);
+        }
+      });
+    };
+
+    fetchSetup();
+
+    const onUpdate = (e) => {
+      if (!e?.detail?.slug || e.detail.slug === selectedSlug) {
+        fetchSetup();
+      }
+    };
+    window.addEventListener("mysetups_setup_updated", onUpdate);
+    window.addEventListener("storage", fetchSetup);
+    return () => {
+      window.removeEventListener("mysetups_setup_updated", onUpdate);
+      window.removeEventListener("storage", fetchSetup);
+    };
+  }, [selectedSlug]);
+
+  // Filtered tracks
+  const filteredTracks = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    if (!q) return tracks;
+    return tracks.filter(
+      (t) =>
+        t.circuit.toLowerCase().includes(q) ||
+        t.country.toLowerCase().includes(q) ||
+        t.type?.toLowerCase().includes(q)
+    );
+  }, [search]);
+
+  // Selected track details
+  const selectedTrack = useMemo(() => {
+    return (
+      tracks.find((t) => t.slug === selectedSlug) ||
+      filteredTracks[0] ||
+      tracks[0]
+    );
+  }, [selectedSlug, filteredTracks]);
+
+  const selectedTrackIndex = useMemo(() => {
+    return tracks.findIndex((t) => t.slug === selectedTrack.slug) + 1;
+  }, [selectedTrack]);
+
+  // Clean items formatted for AnimatedList
+  const listItems = useMemo(() => {
+    return filteredTracks.map((t) => {
+      const origIdx = tracks.findIndex((orig) => orig.slug === t.slug);
+      const round = `R${String(origIdx + 1).padStart(2, "0")}`;
+      return {
+        id: t.slug,
+        slug: t.slug,
+        title: t.circuit,
+        description: t.country,
+        flagCode: t.flagCode,
+        round: round,
+      };
+    });
+  }, [filteredTracks]);
+
+  const formattedUpdateDate = useMemo(() => {
+    if (!latestUpdate?.updatedAt) return "Stagione F1 26";
+    try {
+      const d = new Date(latestUpdate.updatedAt);
+      return d.toLocaleDateString("it-IT", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
+    } catch {
+      return "Recente";
+    }
+  }, [latestUpdate]);
+
   return (
-    <div className="min-h-screen bg-[#050505] text-white">
-      <NavBar />
+    <div className="min-h-screen bg-gradient-to-b from-[#0d0b18] via-[#07070a] to-[#07070a] text-zinc-100 flex flex-col justify-between selection:bg-violet-500/30 selection:text-white">
+      <div>
+        <NavBar />
 
-      <main>
-          <section className="relative isolate flex min-h-screen items-center justify-center px-4 pt-24 text-center">
-            <div className="home-depth-grid absolute inset-0 -z-30" />
-            <div className="absolute inset-0 -z-20 bg-[radial-gradient(circle_at_center,rgba(139,92,246,0.18),rgba(12,7,20,0.5)_24%,rgba(5,5,5,0.96)_62%)]" />
-            <div className="absolute inset-x-0 top-0 -z-10 h-48 bg-linear-to-b from-black via-black/70 to-transparent" />
-            <div className="absolute inset-x-0 bottom-0 -z-10 h-48 bg-linear-to-t from-black via-black/80 to-transparent" />
+        {/* ================= HERO SECTION (IMPATTO, ACCOGLIENTE CON LOGO AL CENTRO) ================= */}
+        <section className="relative px-4 pt-24 pb-14 sm:px-6 lg:px-8 text-center max-w-5xl mx-auto overflow-hidden">
+          {/* Hero Background Atmosphere */}
+          <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+            <Image
+              src="/assets/aistudio/image_e54ac127.png"
+              alt=""
+              fill
+              priority
+              className="object-cover object-center opacity-30 select-none scale-105"
+            />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_20%,rgba(82,39,255,0.2),transparent_55%)]" />
+            <div className="absolute inset-0 bg-gradient-to-b from-[#0d0b18]/45 via-[#07070a]/85 to-[#07070a]" />
+          </div>
 
-            <div className="mx-auto flex w-full max-w-5xl flex-col items-center">
-              <div className="inline-flex items-center rounded-full border border-violet-400/35 bg-violet-500/10 px-5 py-2 text-sm font-bold uppercase tracking-tight text-violet-300 shadow-[0_0_35px_rgba(139,92,246,0.16)]">
-                F126 SETUPS
-              </div>
-
-              <p className="mt-10 text-sm font-medium uppercase tracking-[0.55em] text-white/52 sm:text-base">
-                {t("welcome")}
-              </p>
-
-              <h1 className="mt-6 text-[clamp(4.5rem,12vw,10rem)] font-black leading-none tracking-[-0.03em] text-white">
-                <span className="bg-[linear-gradient(180deg,#b26cff,#8b5cf6)] bg-clip-text text-transparent drop-shadow-[0_0_32px_rgba(139,92,246,0.35)]">
-                  My
-                </span>
-                <span>Setups</span>
-                <sup className="ml-2 align-super text-[0.14em] font-black tracking-normal text-violet-400">
-                  TM
-                </sup>
-              </h1>
-
-              <p className="mt-7 max-w-2xl text-xl leading-8 text-white/58 sm:text-2xl">
-                {t("heroSubtitle")}
-              </p>
-
-              <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-                {!isAuthenticated ? (
-                  <Link
-                    href="/login"
-                    className="inline-flex min-w-44 items-center justify-center gap-3 rounded-xl bg-violet-500 px-7 py-4 text-base font-black text-white shadow-[0_0_46px_rgba(139,92,246,0.38)] transition hover:-translate-y-0.5 hover:bg-violet-400"
-                  >
-                    {t("loginNow")}
-                    <ChevronRight size={18} />
-                  </Link>
-                ) : null}
-                <Link
-                  href="/tracks"
-                  className="inline-flex min-w-44 items-center justify-center rounded-xl border border-white/12 bg-black/25 px-7 py-4 text-base font-black text-white transition hover:-translate-y-0.5 hover:border-violet-300/45 hover:bg-white/4"
-                >
-                  {t("viewCircuits")}
-                </Link>
-              </div>
-
-              <div className="mt-10 w-full max-w-2xl rounded-2xl border border-violet-500/25 bg-[linear-gradient(135deg,rgba(139,92,246,0.1),rgba(255,255,255,0.02))] p-5 shadow-[0_0_45px_rgba(139,92,246,0.14)] backdrop-blur-sm">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="grid h-10 w-10 place-items-center rounded-full border border-violet-400/30 bg-violet-500/10 text-violet-200 shadow-[0_0_20px_rgba(139,92,246,0.25)]">
-                      <Zap size={17} />
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-black uppercase tracking-[0.28em] text-violet-200/75">{t("lastTrackUpdated")}</p>
-                      <h3 className="mt-1 text-xl font-black text-white">{latestTrack?.circuit || "Loading…"}</h3>
-                    </div>
-                  </div>
-                  <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/35 bg-emerald-500/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.22em] text-emerald-200 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
-                    <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                    LIVE
-                  </div>
-                </div>
-
-                <div className="mt-4 flex flex-col gap-2 text-sm text-white/70 sm:flex-row sm:items-center sm:justify-between">
-                  <span>{t("updated")} {latestTrack ? new Date(latestTrack.updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—"}</span>
-                  {latestTrack?.updatedAt ? (
-                    <span className="text-violet-200">{new Date(latestTrack.updatedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</span>
-                  ) : null}
-                </div>
-              </div>
-
-              <div className="mt-20 flex w-full max-w-xl items-center justify-center gap-8 text-xs font-medium uppercase tracking-[0.28em] text-white/16 sm:gap-12">
-                <span>Aero</span>
-                <span className="h-px w-16 bg-violet-500/35" />
-                <span>Grip</span>
-                <span className="h-px w-16 bg-violet-500/35" />
-                <span>Pace</span>
-                <span className="h-px w-16 bg-violet-500/35" />
-                <span>Win</span>
-              </div>
+          {/* Centered MySetups Logo with target dimensions */}
+          <div className="relative mx-auto flex flex-col items-center">
+            <div className="relative h-[300px] w-[218px] transition-transform duration-300 hover:scale-105 sm:h-[360px] sm:w-[260px]">
+              <Image
+                src={logoImg}
+                alt="MySetups F1 26"
+                className="h-full w-full object-contain filter drop-shadow-[0_10px_30px_rgba(0,0,0,0.6)]"
+                priority
+              />
             </div>
-          </section>
 
-          <section id="features" className="relative scroll-mt-28 border-t border-white/3 bg-[#070707] px-4 py-28 sm:px-6 lg:px-8">
-            <div className="absolute inset-x-0 top-0 h-40 bg-linear-to-b from-violet-950/10 to-transparent" />
-            <div className="relative mx-auto max-w-7xl">
-              <div className="text-center">
-                <p className="text-sm font-bold uppercase tracking-[0.45em] text-violet-400">
-                  {t("features")}
-                </p>
-                <h2 className="mt-4 text-4xl font-black uppercase tracking-tight sm:text-5xl">
-                  {t("why")}<sup className="text-base text-violet-300">TM</sup>
-                </h2>
-              </div>
+            <p className="mt-6 text-sm sm:text-base text-zinc-400 max-w-2xl mx-auto leading-relaxed">
+              L'hub di riferimento per gli assetti competitivi su <strong className="text-zinc-200">F1 26</strong>. 
+              Configurazioni tecniche su misura per tutti i 24 Gran Premi, calibrate con precisione per Qualifica, Gara e Parco Chiuso.
+            </p>
 
-              <div className="mt-16 grid gap-6 md:grid-cols-3">
-                {featureCards.map((feature) => {
-                  const Icon = feature.icon;
-                  return (
-                    <article
-                      key={feature.title}
-                      className="rounded-xl border border-white/10 bg-white/4.5 p-7 shadow-[0_0_50px_rgba(0,0,0,0.18)] transition hover:-translate-y-1 hover:border-violet-400/30 hover:bg-white/6"
-                    >
-                      <div className="grid h-10 w-10 place-items-center rounded-xl bg-violet-500/16 text-violet-300">
-                        <Icon size={21} />
-                      </div>
-                      <h3 className="mt-6 text-lg font-black uppercase tracking-wide text-white">
-                        {feature.title}
-                      </h3>
-                      <p className="mt-3 leading-7 text-white/58">{feature.text}</p>
-                    </article>
-                  );
-                })}
-              </div>
-            </div>
-          </section>
+            {/* Hero CTAs */}
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+              <Link
+                href="/setups"
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#5227ff] to-[#8b5cf6] px-6 py-3 text-xs sm:text-sm font-bold text-white transition hover:brightness-110 shadow-lg shadow-violet-950/40"
+              >
+                <span>Esplora i Setup</span>
+                <ArrowRight size={14} />
+              </Link>
 
-          <section id="reviews" className="scroll-mt-28 bg-[#080808] px-4 py-28 sm:px-6 lg:px-8">
-            <div className="mx-auto max-w-5xl">
-              <div className="text-center">
-                <p className="text-sm font-bold uppercase tracking-[0.45em] text-violet-400">
-                  {t("testimonials")}
-                </p>
-                <h2 className="mt-4 text-4xl font-black uppercase tracking-tight sm:text-5xl">
-                  {t("driverReviews")}
-                </h2>
-              </div>
-
-              <div className="mt-16 grid gap-6 md:grid-cols-2">
-                {reviews.map((review) => (
-                  <figure
-                    key={review}
-                    className="rounded-xl border border-white/10 bg-white/4 p-8 shadow-[0_0_50px_rgba(0,0,0,0.18)]"
-                  >
-                    <Quote className="text-violet-500/35" size={34} />
-                    <blockquote className="mt-4 text-base font-semibold italic leading-8 text-white/88">
-                      "{review}"
-                    </blockquote>
-                    <figcaption className="mt-7 flex gap-1 text-violet-400">
-                      {Array.from({ length: 5 }).map((_, index) => (
-                        <Star key={index} size={16} fill="currentColor" />
-                      ))}
-                    </figcaption>
-                  </figure>
-                ))}
-              </div>
-            </div>
-          </section>
-
-
-          <section id="support" className="scroll-mt-28 bg-[#050505] px-4 pb-24 sm:px-6 lg:px-8">
-            <div className="mx-auto max-w-7xl rounded-2xl border border-violet-500/25 bg-[linear-gradient(135deg,rgba(139,92,246,0.11),rgba(255,255,255,0.035),rgba(255,255,255,0.02))] px-6 py-16 text-center shadow-[0_0_90px_rgba(139,92,246,0.1)]">
-              <div className="mx-auto grid h-12 w-12 place-items-center rounded-xl bg-violet-500/16 text-violet-300">
-                <Headphones size={25} />
-              </div>
-              <h2 className="mt-6 text-3xl font-black uppercase tracking-tight">
-                {t("needHelp")}
-              </h2>
-              <p className="mx-auto mt-4 max-w-xl text-lg leading-8 text-white/58">
-                {t("helpCopy")}
-              </p>
               <a
-                href="89/YzVN3ncCwR"
+                href="https://discord.gg/YzVN3ncCwR"
                 target="_blank"
                 rel="noreferrer"
-                className="mt-8 inline-flex items-center justify-center rounded-xl bg-violet-500 px-7 py-3 font-black text-white transition hover:bg-violet-400"
+                className="inline-flex items-center gap-2 rounded-xl border border-violet-400/20 bg-violet-500/[0.06] px-5 py-3 text-xs sm:text-sm font-semibold text-zinc-200 transition hover:border-violet-400/40 hover:bg-violet-500/[0.12] hover:text-white"
               >
-                {t("openDiscord")}
+                <Users size={15} className="text-violet-300" />
+                <span>Community Discord</span>
+                <ArrowUpRight size={12} className="text-violet-300/70" />
               </a>
+
+            </div>
+          </div>
+        </section>
+
+        {/* ================= SEZIONE DINAMICA "ULTIMO AGGIORNAMENTO" ================= */}
+        {latestUpdate && (
+          <section className="mx-auto max-w-6xl px-4 pb-8 sm:px-6 lg:px-8">
+            <div className="rounded-2xl border border-violet-400/[0.14] bg-gradient-to-br from-[#151226]/90 via-[#0c0d15]/90 to-[#0c0d15]/80 backdrop-blur-md p-5 sm:p-6 shadow-xl shadow-violet-950/10 relative overflow-hidden transition duration-200 hover:border-violet-400/25">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5">
+                <div className="flex items-start gap-4">
+                  {/* Flag */}
+                  <div className="relative h-12 w-16 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-black/40">
+                    <Image
+                      src={`/flags/${latestUpdate.flagCode}.svg`}
+                      alt=""
+                      width={48}
+                      height={32}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span                       className="inline-flex items-center gap-1.5 rounded-md border border-violet-400/20 bg-violet-500/[0.06] px-2.5 py-0.5 font-mono text-[10px] font-bold text-zinc-300 uppercase">
+                        <Clock size={11} className="text-violet-300" />
+                        ULTIMO AGGIORNAMENTO F1 26
+                      </span>
+                      <span className="font-mono text-xs text-zinc-400">
+                        {formattedUpdateDate}
+                      </span>
+                    </div>
+
+                    <h3 className="text-lg sm:text-xl font-bold text-white mt-1">
+                      {latestUpdate.circuit} ({latestUpdate.country})
+                    </h3>
+
+                    <p className="text-xs text-zinc-400 font-medium mt-0.5">
+                      Variazione modificata: <strong className="text-zinc-200">{latestUpdate.variation}</strong>
+                    </p>
+
+                    <p className="mt-1.5 text-xs text-zinc-400 max-w-2xl leading-relaxed">
+                      "{latestUpdate.notes}"
+                    </p>
+                  </div>
+                </div>
+
+                <div className="shrink-0 self-start md:self-center">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedSlug(latestUpdate.slug)}
+                    className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#5227ff] to-[#8b5cf6] px-4 py-2.5 text-xs font-bold text-white transition hover:brightness-110"
+                  >
+                    <span>Vedi Pista Aggiornata</span>
+                    <ArrowRight size={13} />
+                  </button>
+                </div>
+              </div>
             </div>
           </section>
+        )}
+
+        {/* ================= EXPLORER SETUP F1 26 (SELEZIONE CIRCUITO + SCHEDA DETTAGLIATA) ================= */}
+        <main className="mx-auto max-w-6xl px-4 py-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            {/* Left Column: Circuit Selection List */}
+            <div className="lg:col-span-5 flex flex-col gap-3">
+              <div className="flex items-center justify-between text-xs text-zinc-400 px-1">
+                <span className="font-semibold text-zinc-200">
+                  Seleziona circuito ({filteredTracks.length})
+                </span>
+                <span className="text-[11px] font-mono text-zinc-500">
+                  Calendario F1 26
+                </span>
+              </div>
+
+              {/* Search Bar */}
+              <div className="relative">
+                <Search
+                  size={14}
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500"
+                />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Cerca per circuito o nazione..."
+                  className="w-full rounded-xl border border-violet-400/[0.14] bg-[#0c0d15]/80 backdrop-blur-md py-2.5 pl-10 pr-3 text-xs text-white placeholder-zinc-500 outline-none transition focus:border-violet-400/50 focus:ring-2 focus:ring-violet-500/10"
+                />
+              </div>
+
+              {/* Robust AnimatedList Component */}
+              <AnimatedList
+                items={listItems}
+                selectedId={selectedSlug}
+                onItemSelect={(item) => {
+                  setSelectedSlug(item.slug);
+                }}
+                theme="dark"
+                width="100%"
+                maxHeight={580}
+                radius={16}
+                frame={true}
+                displayScrollbar={true}
+                enableArrowNavigation={true}
+              />
+            </div>
+
+            {/* Setup display; access is controlled by account permissions. */}
+            <div className="lg:col-span-7">
+              <SetupDisplay
+                setup={currentSetup}
+                isAuthorized={isAuthorized}
+                trackName={selectedTrack.circuit}
+                slug={selectedTrack.slug}
+                track={selectedTrack}
+              />
+            </div>
+          </div>
         </main>
+
+        {/* ================= INTEGRAZIONE COMMUNITY DISCORD ================= */}
+        <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
+          <div className="rounded-3xl border border-violet-400/[0.14] bg-gradient-to-br from-[#17132a] via-[#0d0d18] to-[#08090f] p-8 sm:p-12 shadow-2xl shadow-violet-950/15 relative overflow-hidden">
+            <div className="pointer-events-none absolute -right-24 -top-28 h-72 w-72 rounded-full bg-violet-600/10 blur-3xl" />
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+              <div className="max-w-xl">
+                <div className="inline-flex items-center gap-2 rounded-full border border-violet-400/20 bg-violet-500/[0.06] px-3.5 py-1 text-xs font-mono font-semibold text-zinc-300 mb-3">
+                  <MessageSquare size={13} className="text-violet-300" />
+                  <span>COMMUNITY UFFICIALE MYSETUPS</span>
+                </div>
+
+                <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+                  Entra nel Discord Ufficiale di F1 26
+                </h2>
+
+                <p className="mt-3 text-xs sm:text-sm text-zinc-400 leading-relaxed">
+                  Confrontati direttamente con i nostri ingegneri di pista e i piloti di lega.
+                  Ricevi notifiche in tempo reale al rilascio di nuovi assetti dopo ogni patch ufficiale di F1 26, canali telemetria dedicati per ogni GP e assistenza su volanti Direct Drive e Gamepad.
+                </p>
+
+                <div className="mt-6 flex flex-wrap gap-4 text-xs text-zinc-400 font-mono">
+                  <div className="flex items-center gap-1.5">
+                    <Check size={14} className="text-emerald-400" />
+                    <span>Canali per tutti i 24 GP</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Check size={14} className="text-emerald-400" />
+                    <span>Aggiornamenti Post-Patch</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="shrink-0 flex flex-col items-start sm:items-center gap-3">
+                <a
+                  href="https://discord.gg/YzVN3ncCwR"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center justify-center gap-2.5 rounded-2xl bg-[#5865F2] px-8 py-4 text-sm font-bold text-white transition hover:bg-[#4752c4] shadow-lg"
+                >
+                  <Users size={18} />
+                  <span>Unisciti alla Community Discord</span>
+                  <ArrowUpRight size={16} />
+                </a>
+                <span className="text-[11px] text-zinc-500 font-mono">
+                  Accesso gratuito aperto a tutti i piloti
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
+
+      <Footer />
+    </div>
   );
 }
-  

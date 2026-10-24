@@ -2,6 +2,8 @@ import fs from "fs";
 import path from "path";
 import { setups as legacySetups, tracks } from "@/lib/data";
 import { emptyFlatSetupForSlug, mergeLegacySetup } from "@/lib/setup-keys";
+import { generateFlatSetup } from "@/lib/default-setups";
+import { clampValue } from "@/lib/setup-sections";
 
 const FILE = path.join(process.cwd(), "data", "track-setups.json");
 
@@ -35,9 +37,11 @@ function attachUpdatedAt(setup, fallbackDate = new Date().toISOString()) {
 function seedFromLegacy() {
   const out = {};
   for (const t of tracks) {
-    const base = emptyFlatSetupForSlug();
+    const base = generateFlatSetup(t.slug);
     const leg = legacySetups[t.slug];
-    Object.assign(base, mergeLegacySetup(leg));
+    if (leg) {
+      Object.assign(base, mergeLegacySetup(leg));
+    }
     out[t.slug] = attachUpdatedAt(base, new Date().toISOString());
   }
   return out;
@@ -52,7 +56,11 @@ export function getAllTrackSetups() {
 
   for (const t of tracks) {
     if (!data[t.slug]) {
-      data[t.slug] = attachUpdatedAt({ ...emptyFlatSetupForSlug(), ...mergeLegacySetup(legacySetups[t.slug]) });
+      const generated = generateFlatSetup(t.slug);
+      if (legacySetups[t.slug]) {
+        Object.assign(generated, mergeLegacySetup(legacySetups[t.slug]));
+      }
+      data[t.slug] = attachUpdatedAt(generated);
     } else {
       data[t.slug] = attachUpdatedAt(data[t.slug]);
     }
@@ -64,14 +72,75 @@ export function getAllTrackSetups() {
 
 export function getTrackSetupFlat(slug) {
   const all = getAllTrackSetups();
-  const base = all[slug] || { ...emptyFlatSetupForSlug(), ...mergeLegacySetup(legacySetups[slug]) };
+  const base = all[slug] || generateFlatSetup(slug);
   return attachUpdatedAt(base);
 }
 
 export function saveTrackSetupFlat(slug, flat) {
   const all = getAllTrackSetups();
   const prev = all[slug] || emptyFlatSetupForSlug();
-  all[slug] = attachUpdatedAt({ ...prev, ...flat });
+  const nextData = { ...prev, ...flat };
+
+  // Enforce parameter boundaries across all variations (race, quali, parc_ferme)
+  for (const [key, value] of Object.entries(nextData)) {
+    for (const prefix of ["race_", "quali_", "parc_ferme_"]) {
+      if (key.startsWith(prefix)) {
+        const suffix = key.slice(prefix.length);
+        if (typeof value === "number") {
+          nextData[key] = clampValue(suffix, value);
+        }
+      }
+    }
+  }
+
+  if (flat.latest_variation) {
+    nextData.latest_variation = flat.latest_variation;
+  }
+  all[slug] = attachUpdatedAt(nextData);
+  writeFile(all);
+  return all[slug];
+}
+
+export function duplicateTrackSetup(sourceSlug, targetSlug, variantFrom = null, variantTo = null) {
+  const all = getAllTrackSetups();
+  const source = all[sourceSlug] || generateFlatSetup(sourceSlug);
+  const target = all[targetSlug] || generateFlatSetup(targetSlug);
+
+  if (variantFrom && variantTo) {
+    const fromPrefix = `${variantFrom}_`;
+    const toPrefix = `${variantTo}_`;
+    for (const [key, value] of Object.entries(source)) {
+      if (key.startsWith(fromPrefix)) {
+        const suffix = key.slice(fromPrefix.length);
+        target[`${toPrefix}${suffix}`] = value;
+      }
+    }
+    target.latest_variation = `Duplicato da ${variantFrom.toUpperCase()} a ${variantTo.toUpperCase()}`;
+  } else {
+    Object.assign(target, { ...source });
+    target.latest_variation = `Duplicato interamente da ${sourceSlug}`;
+  }
+
+  all[targetSlug] = attachUpdatedAt(target);
+  writeFile(all);
+  return all[targetSlug];
+}
+
+export function deleteTrackSetup(slug) {
+  const all = getAllTrackSetups();
+  if (all[slug]) {
+    // Reset to clean default
+    all[slug] = attachUpdatedAt(generateFlatSetup(slug));
+    writeFile(all);
+    return true;
+  }
+  return false;
+}
+
+export function createTrackSetup(slug, customData = {}) {
+  const all = getAllTrackSetups();
+  const base = generateFlatSetup(slug);
+  all[slug] = attachUpdatedAt({ ...base, ...customData });
   writeFile(all);
   return all[slug];
 }
@@ -86,25 +155,33 @@ export function getLatestTrackUpdate() {
     const date = new Date(updatedAt);
     if (Number.isNaN(date.getTime())) continue;
     if (!latest || date.getTime() > new Date(latest.updatedAt).getTime()) {
-      latest = { slug, updatedAt: date.toISOString() };
+      latest = { slug, updatedAt: date.toISOString(), setup };
     }
   }
 
-  if (!latest) {
-    const fallbackSlug = tracks[0]?.slug || "australia";
-    return {
-      slug: fallbackSlug,
-      circuit: tracks.find((item) => item.slug === fallbackSlug)?.circuit || "MySetups",
-      updatedAt: new Date().toISOString(),
-    };
-  }
+  const fallbackSlug = tracks[0]?.slug || "bahrain";
+  const slug = latest?.slug || fallbackSlug;
+  const track = tracks.find((item) => item.slug === slug) || { circuit: "Bahrain International Circuit", country: "Bahrain", flagCode: "bh" };
+  const trackIndex = tracks.findIndex((item) => item.slug === slug) + 1;
+  const setup = latest?.setup || all[slug] || generateFlatSetup(slug);
 
-  const track = tracks.find((item) => item.slug === latest.slug) || { circuit: "MySetups", country: "World" };
+  const notes =
+    setup.update_notes ||
+    setup.race_driving_notes ||
+    setup.driving_notes ||
+    "Aggiornato bilanciamento alare e pressione pneumatici per le ultime specifiche di F1 26.";
+
+  const variation = setup.latest_variation || "Assetto Gara & Qualifica F1 26";
+
   return {
-    slug: latest.slug,
+    slug,
     circuit: track.circuit || track.country || "MySetups",
     country: track.country || "World",
-    updatedAt: latest.updatedAt,
+    flagCode: track.flagCode || "it",
+    round: `R${String(trackIndex > 0 ? trackIndex : 1).padStart(2, "0")}`,
+    updatedAt: latest?.updatedAt || new Date().toISOString(),
+    notes,
+    variation,
   };
 }
 

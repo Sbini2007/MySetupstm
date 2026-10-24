@@ -1,45 +1,58 @@
 "use client";
 
-"use client";
-
+import Image from "next/image";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
+import logoImg from "@/assets/images/logo.png";
+import { ArrowUpRight } from "lucide-react";
 
 export default function Footer() {
-  const { data: session } = useSession();
-  const premium = Boolean(session?.user?.premium || session?.user?.admin);
-
   return (
-    <footer className="border-t border-white/10 bg-[#070707] px-4 py-10 text-white/64 sm:px-6">
-      <div className="mx-auto max-w-7xl">
-        {premium ? (
-          <div className="grid gap-8 rounded-lg border border-white/10 bg-white/[0.035] p-6 lg:grid-cols-[1fr_auto] lg:items-center">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.32em] text-violet-300">
-                Serve supporto sull'assetto?
-              </p>
-              <h2 className="mt-3 text-2xl font-black text-white">
-                Entra nel Discord se vuoi più informazioni.
-              </h2>
+    <footer className="border-t border-violet-400/[0.12] bg-[#08090f] text-zinc-400">
+      <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pb-8 border-b border-violet-400/[0.1]">
+          <div>
+            <div className="flex items-center gap-2.5">
+              <div className="relative h-7 w-7">
+                <Image
+                  src={logoImg}
+                  alt="MySetups"
+                  className="h-full w-full object-contain"
+                />
+              </div>
+              <div className="flex flex-col">
+                <span className="font-sans text-sm font-extrabold text-white tracking-tight">MYSETUPS</span>
+                <span className="text-[8px] font-mono tracking-widest text-violet-300 uppercase">F1 26 Sim Engineering</span>
+              </div>
             </div>
+            <p className="mt-2.5 text-xs text-zinc-500 max-w-sm leading-relaxed">
+              Assetti e telemetrie sim racing per Formula 1 2026. Calibrati per stabilità, rotazione e consistenza passo gara su volante e controller.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-6 text-xs font-medium">
+            <Link href="/setups" className="hover:text-violet-300 transition">
+              Setup
+            </Link>
+            <Link href="/guide" className="hover:text-violet-300 transition">
+              Guide
+            </Link>
             <a
               href="https://discord.gg/YzVN3ncCwR"
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center justify-center rounded-lg bg-violet-600 px-5 py-3 text-sm font-black uppercase tracking-[0.22em] text-white transition hover:bg-violet-500"
+              className="inline-flex items-center gap-1 hover:text-violet-300 transition text-zinc-400"
             >
-              Join Discord
+              <span>Discord</span>
+              <ArrowUpRight size={12} />
             </a>
           </div>
-        ) : null}
+        </div>
 
-        <div className="mt-8 flex flex-col gap-4 border-t border-white/10 pt-6 text-sm text-white/40 sm:flex-row sm:items-center sm:justify-between">
-          <p>Copyright 2026 MySetups. Premium F126 setup service.</p>
-          <div className="flex flex-wrap gap-4">
-            <Link href="/" className="transition hover:text-white">Home</Link>
-            <Link href="/circuiti" className="transition hover:text-white">Circuiti</Link>
-            <Link href="/acquista" className="transition hover:text-white">Acquista</Link>
-            {premium ? <Link href="/support" className="transition hover:text-white">Supporto</Link> : null}
+        <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-600">
+          <p>© 2026 MySetups. F1 2026 Season Validated.</p>
+          <div className="flex items-center gap-4">
+            <Link href="/support" className="hover:text-violet-300 transition">Supporto</Link>
+            <Link href="/admin/login" className="hover:text-violet-300 transition">Staff</Link>
           </div>
         </div>
       </div>

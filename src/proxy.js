@@ -13,7 +13,9 @@ export async function proxy(request) {
     pathname.startsWith("/api/paypal") ||
     pathname.startsWith("/api/") ||
     pathname === "/login" ||
+    pathname === "/acquista" ||
     pathname === "/checkout" ||
+    pathname === "/pricing" ||
     pathname === "/admin/login" ||
     pathname === "/favicon.ico" ||
     pathname === "/robots.txt" ||
@@ -29,12 +31,6 @@ export async function proxy(request) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("redirect", request.nextUrl.pathname);
     return NextResponse.redirect(loginUrl);
-  }
-
-  if (!token.premium && !token.admin) {
-    const checkoutUrl = new URL("/checkout", request.url);
-    checkoutUrl.searchParams.set("redirect", request.nextUrl.pathname);
-    return NextResponse.redirect(checkoutUrl);
   }
 
   return NextResponse.next();

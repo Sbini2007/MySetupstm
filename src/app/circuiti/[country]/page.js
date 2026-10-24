@@ -1,84 +1,107 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useParams } from "next/navigation";
-import { useSession } from "next-auth/react";
+import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { ArrowLeft, Sparkles, Trophy, Zap, Sliders } from "lucide-react";
 import NavBar from "@/components/NavBar";
 import Footer from "@/components/Footer";
-import AuthGate from "@/components/AuthGate";
 import SetupDisplay from "@/components/SetupDisplay";
 import { tracks } from "@/lib/data";
-import { emptyFlatSetupForSlug } from "@/lib/setup-keys";
+import { safeFetchJson } from "@/lib/safe-json";
 
 export default function CircuitDetailPage() {
   const params = useParams();
-  const { data: session, status } = useSession();
+  const router = useRouter();
   const slug = params.country || params.slug;
-  const track = tracks.find((item) => item.slug === slug) || tracks[0];
+  const track = tracks.find((item) => item.slug === slug || item.country.toLowerCase() === String(slug).toLowerCase()) || tracks[0];
   const trackIndex = tracks.findIndex((item) => item.slug === track.slug) + 1;
   const [setup, setSetup] = useState(null);
-
-  const premium = Boolean(session?.user?.premium || session?.user?.admin);
-  const unlocked = status === "authenticated" && premium;
+  const [isAuthorized, setIsAuthorized] = useState(null);
 
   const loadSetup = useCallback(async () => {
-    if (!slug || !unlocked) return;
-
-    try {
-      const res = await fetch(`/api/setups/${slug}`, { credentials: "include", cache: "no-store" });
-      const data = await res.json();
-
-      if (!res.ok) {
-        setSetup(emptyFlatSetupForSlug());
-        return;
-      }
-
-      setSetup(data.setup || emptyFlatSetupForSlug());
-    } catch {
-      setSetup(emptyFlatSetupForSlug());
+    if (!slug) return;
+    const data = await safeFetchJson(`/api/setups/${slug}`, { cache: "no-store" });
+    if (data) {
+      setIsAuthorized(data.isAuthorized);
+      setSetup(data.isAuthorized ? data.setup : null);
     }
-  }, [slug, unlocked]);
+  }, [slug]);
 
   useEffect(() => {
     loadSetup();
-    const timer = setInterval(loadSetup, 30000);
-    return () => clearInterval(timer);
-  }, [loadSetup]);
+  }, [loadSetup, track?.slug]);
 
   return (
-    <div className="min-h-screen bg-[#07090d] text-white">
-      <NavBar />
-      <AuthGate requirePremium>
-        <main className="mx-auto max-w-7xl px-4 pb-20 pt-24 sm:px-6 lg:px-8">
-          <div className="mt-7 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="grid h-14 w-20 place-items-center rounded-xl border border-white/10 bg-white/5 p-2">
-                <Image src={`/flags/${track.flagCode}.svg`} alt="" width={56} height={36} style={{ width: "auto", height: "auto" }} className="h-9 w-14 object-contain" />
-              </div>
-              <div>
-                <p className="text-[11px] font-black uppercase tracking-[0.3em] text-violet-200/70">
-                  R{String(trackIndex).padStart(2, "0")} · {track.country}
-                </p>
-                <h1 className="mt-2 text-5xl font-black tracking-tight text-white">{track.country}</h1>
-                <p className="mt-1 text-base text-white/55">{track.circuit}</p>
-              </div>
-            </div>
+    <div className="min-h-screen bg-[#07070a] text-zinc-100 flex flex-col justify-between">
+      <div>
+        <NavBar />
 
-            <span className="inline-flex items-center rounded-lg border border-violet-400/35 bg-violet-500/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.28em] text-violet-200">
-              Premium
-            </span>
+        <main className="mx-auto max-w-5xl px-4 pb-24 pt-10 sm:px-6">
+          {/* Back Navigation Bar */}
+          <div className="mb-6 flex items-center justify-between">
+            <Link
+              href="/setups"
+              className="inline-flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition"
+            >
+              <ArrowLeft size={14} />
+              <span>Tutti i Setup</span>
+            </Link>
+
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-xs text-zinc-500">
+                GP {trackIndex} di 24
+              </span>
+              <span className="rounded border border-white/15 bg-white/[0.03] px-2.5 py-0.5 font-mono text-[11px] font-bold text-zinc-300">
+                F1 26 SPEC
+              </span>
+            </div>
           </div>
 
-          {setup ? (
-            <section className="mt-8">
-              <SetupDisplay setup={setup} onBack={() => window.history.back()} />
-            </section>
-          ) : (
-            <p className="mt-8 text-center text-white/50">Caricamento setup…</p>
-          )}
+          {/* Track Header Card */}
+          <div className="rounded-2xl border border-white/15 bg-[#0c0d14] p-6 sm:p-8 relative overflow-hidden">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5 relative z-10">
+              <div className="flex items-center gap-4">
+                <div className="grid h-14 w-20 shrink-0 place-items-center rounded-xl border border-white/15 bg-black/40 p-2">
+                  <Image
+                    src={`/flags/${track.flagCode}.svg`}
+                    alt={`${track.country} flag`}
+                    width={48}
+                    height={32}
+                    className="h-8 w-12 rounded-[2px] object-cover ring-1 ring-white/10"
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 text-[11px] text-zinc-400 font-mono">
+                    <span className="text-zinc-300 font-bold">Round {String(trackIndex).padStart(2, "0")}</span>
+                    <span>·</span>
+                    <span>{track.country.toUpperCase()}</span>
+                    <span>·</span>
+                    <span className="text-zinc-500">{track.type}</span>
+                  </div>
+                  <h1 className="mt-1 text-2xl sm:text-3xl font-black tracking-tight text-white">
+                    {track.circuit}
+                  </h1>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          {/* Setup Display Section with RBAC */}
+          <section className="mt-8">
+            <SetupDisplay
+              setup={setup}
+              isAuthorized={isAuthorized}
+              onBack={() => router.push("/setups")}
+              trackName={`${track.country} (${track.circuit})`}
+              slug={track.slug}
+            />
+          </section>
         </main>
-      </AuthGate>
+      </div>
+
       <Footer />
     </div>
   );

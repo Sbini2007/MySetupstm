@@ -1,7 +1,14 @@
 import GoogleProvider from "next-auth/providers/google";
 import DiscordProvider from "next-auth/providers/discord";
+import CredentialsProvider from "next-auth/providers/credentials";
 import { isAdminEmail } from "@/lib/admin-emails";
-import { getServerUserByEmail, getServerUsers, patchServerUserOAuth, upsertServerUser } from "@/lib/server-store";
+import {
+  authenticateServerUser,
+  getServerUserByEmail,
+  getServerUsers,
+  patchServerUserOAuth,
+  upsertServerUser,
+} from "@/lib/server-store";
 
 const MAX_SESSION_IMAGE_BYTES = 200 * 1024;
 const MAX_SESSION_IMAGE_LENGTH = 4096;
@@ -25,10 +32,31 @@ export const authOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      authorization: { params: { prompt: "select_account" } },
     }),
     DiscordProvider({
       clientId: process.env.DISCORD_CLIENT_ID,
       clientSecret: process.env.DISCORD_CLIENT_SECRET,
+    }),
+    CredentialsProvider({
+      name: "Email e password",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        const email = String(credentials?.email || "").trim().toLowerCase();
+        const password = credentials?.password;
+        if (!email || typeof password !== "string" || !password || password.length > 128) return null;
+        const user = await authenticateServerUser(email, password);
+        if (!user) return null;
+        return {
+          id: String(user.id),
+          email: user.email,
+          name: user.name || user.email.split("@")[0],
+          image: user.image || user.oauthImage || undefined,
+        };
+      },
     }),
   ],
   secret: process.env.NEXTAUTH_SECRET,
@@ -92,6 +120,7 @@ export const authOptions = {
         if (row) {
           token.premium = Boolean(row.premium);
           token.admin = Boolean(row.admin || isAdminEmail(email));
+          token.role = row.role || (token.admin ? "admin" : token.premium ? "subscriber" : "user");
           const displayName = row.name && String(row.name).trim() ? String(row.name).trim() : row.oauthName || token.name;
           token.name = displayName || token.name || email.split("@")[0];
           const customPic = sanitizeSessionImage(row.image);
@@ -114,6 +143,7 @@ export const authOptions = {
       if (session.user) {
         session.user.premium = Boolean(token.premium);
         session.user.admin = Boolean(token.admin);
+        session.user.role = token.role || (token.admin ? "admin" : token.premium ? "subscriber" : "user");
         if (token.name) session.user.name = token.name;
         const safeImage = sanitizeSessionImage(token.picture);
         if (safeImage) {

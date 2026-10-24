@@ -1,0 +1,8 @@
+{
+  "name": "MySetups - F1 & Sim Racing Setups",
+  "description": "Professional sim racing setups, circuit telemetry guides, and setup configurations for F1 racers.",
+  "permissions": [],
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

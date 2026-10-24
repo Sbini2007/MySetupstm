@@ -1,28 +1,28 @@
 export const tracks = [
-  { slug: "bahrain", flagCode: "bh", country: "Bahrain", circuit: "Bahrain International Circuit", type: "Rear traction" },
-  { slug: "saudi-arabia", flagCode: "sa", country: "Saudi Arabia", circuit: "Jeddah Corniche Circuit", type: "High speed" },
-  { slug: "australia", flagCode: "au", country: "Australia", circuit: "Albert Park Circuit", type: "Rotation" },
-  { slug: "japan", flagCode: "jp", country: "Japan", circuit: "Suzuka Circuit", type: "Flow" },
-  { slug: "china", flagCode: "cn", country: "China", circuit: "Shanghai International Circuit", type: "Tyre saving" },
-  { slug: "usa-miami", flagCode: "us", country: "USA", circuit: "Miami International Autodrome", type: "Traction zones" },
-  { slug: "italy-imola", flagCode: "it", country: "Italy", circuit: "Imola Circuit", type: "Kerbs" },
-  { slug: "monaco", flagCode: "mc", country: "Monaco", circuit: "Circuit de Monaco", type: "Mechanical grip" },
-  { slug: "spain", flagCode: "es", country: "Spain", circuit: "Barcelona-Catalunya Circuit", type: "Balanced aero" },
-  { slug: "canada", flagCode: "ca", country: "Canada", circuit: "Circuit Gilles Villeneuve", type: "Braking" },
-  { slug: "austria", flagCode: "at", country: "Austria", circuit: "Red Bull Ring", type: "Acceleration" },
-  { slug: "united-kingdom", flagCode: "gb", country: "United Kingdom", circuit: "Silverstone Circuit", type: "Fast corners" },
-  { slug: "hungary", flagCode: "hu", country: "Hungary", circuit: "Hungaroring", type: "Downforce" },
-  { slug: "belgium", flagCode: "be", country: "Belgium", circuit: "Spa-Francorchamps", type: "Low drag" },
-  { slug: "netherlands", flagCode: "nl", country: "Netherlands", circuit: "Zandvoort Circuit", type: "Banking" },
-  { slug: "italy-monza", flagCode: "it", country: "Italy", circuit: "Monza Circuit", type: "Top speed" },
-  { slug: "azerbaijan", flagCode: "az", country: "Azerbaijan", circuit: "Baku City Circuit", type: "Street speed" },
-  { slug: "singapore", flagCode: "sg", country: "Singapore", circuit: "Marina Bay Street Circuit", type: "Stability" },
-  { slug: "usa-cota", flagCode: "us", country: "USA", circuit: "Circuit of the Americas", type: "Sector mix" },
-  { slug: "mexico", flagCode: "mx", country: "Mexico", circuit: "Autodromo Hermanos Rodriguez", type: "Thin air" },
-  { slug: "brazil", flagCode: "br", country: "Brazil", circuit: "Interlagos Circuit", type: "Race pace" },
-  { slug: "usa-las-vegas", flagCode: "us", country: "USA", circuit: "Las Vegas Strip Circuit", type: "Long straights" },
-  { slug: "qatar", flagCode: "qa", country: "Qatar", circuit: "Lusail International Circuit", type: "Front wear" },
-  { slug: "abu-dhabi", flagCode: "ae", country: "Abu Dhabi", circuit: "Yas Marina Circuit", type: "Exit traction" },
+  { slug: "bahrain", flagCode: "bh", country: "Bahrain", circuit: "Bahrain International Circuit", type: "Trazione e Frenata" },
+  { slug: "saudi-arabia", flagCode: "sa", country: "Arabia Saudita", circuit: "Jeddah Corniche Circuit", type: "Alta Velocità" },
+  { slug: "australia", flagCode: "au", country: "Australia", circuit: "Albert Park Circuit", type: "Misto Veloce" },
+  { slug: "japan", flagCode: "jp", country: "Giappone", circuit: "Suzuka Circuit", type: "Alto Carico" },
+  { slug: "china", flagCode: "cn", country: "Cina", circuit: "Shanghai International Circuit", type: "Gestione Gomme" },
+  { slug: "usa-miami", flagCode: "us", country: "Stati Uniti", circuit: "Miami International Autodrome", type: "Cittadino Veloce" },
+  { slug: "italy-imola", flagCode: "it", country: "Italia", circuit: "Autodromo Enzo e Dino Ferrari", type: "Cordoli & Trazione" },
+  { slug: "monaco", flagCode: "mc", country: "Monaco", circuit: "Circuit de Monaco", type: "Massimo Carico" },
+  { slug: "spain", flagCode: "es", country: "Spagna", circuit: "Circuit de Barcelona-Catalunya", type: "Aero Bilanciato" },
+  { slug: "canada", flagCode: "ca", country: "Canada", circuit: "Circuit Gilles Villeneuve", type: "Chicane & Frenata" },
+  { slug: "austria", flagCode: "at", country: "Austria", circuit: "Red Bull Ring", type: "Giro Corto & Trazione" },
+  { slug: "united-kingdom", flagCode: "gb", country: "Regno Unito", circuit: "Silverstone Circuit", type: "Curve Veloci" },
+  { slug: "hungary", flagCode: "hu", country: "Ungheria", circuit: "Hungaroring", type: "Tortuoso & Guidato" },
+  { slug: "belgium", flagCode: "be", country: "Belgio", circuit: "Circuit de Spa-Francorchamps", type: "Basso Drag" },
+  { slug: "netherlands", flagCode: "nl", country: "Paesi Bassi", circuit: "Circuit Zandvoort", type: "Curve Sopraelevate" },
+  { slug: "italy-monza", flagCode: "it", country: "Italia", circuit: "Autodromo Nazionale Monza", type: "Top Speed (Basso Carico)" },
+  { slug: "azerbaijan", flagCode: "az", country: "Azerbaigian", circuit: "Baku City Circuit", type: "Rettilineo 2.2km & Castello" },
+  { slug: "singapore", flagCode: "sg", country: "Singapore", circuit: "Marina Bay Street Circuit", type: "Cittadino Notturno" },
+  { slug: "usa-cota", flagCode: "us", country: "Stati Uniti", circuit: "Circuit of the Americas", type: "Esses & Dislivelli" },
+  { slug: "mexico", flagCode: "mx", country: "Messico", circuit: "Autodromo Hermanos Rodriguez", type: "Aria Rara & Rettilineo" },
+  { slug: "brazil", flagCode: "br", country: "Brasile", circuit: "Autodromo de Interlagos", type: "Misto Fluido" },
+  { slug: "usa-las-vegas", flagCode: "us", country: "Stati Uniti", circuit: "Las Vegas Strip Circuit", type: "Bassissimo Carico" },
+  { slug: "qatar", flagCode: "qa", country: "Qatar", circuit: "Lusail International Circuit", type: "Grip Laterale Costante" },
+  { slug: "abu-dhabi", flagCode: "ae", country: "Emirati Arabi", circuit: "Yas Marina Circuit", type: "Trazione Settore 3" },
 ];
 
 export const features = [
@@ -49,12 +49,6 @@ export const guides = [
   { title: "Assetto gara", description: "Trasforma il giro secco in passo costante e meno consumo gomme." },
   { title: "Gestione degrado", description: "Leggi i segnali delle gomme e correggi lo stile di guida." },
 ];
-
-export const pricing = {
-  title: "MYSETUPS PACK",
-  price: "EUR 15",
-  description: "Pagamento unico per sbloccare setup, guide, note premium e supporto Discord.",
-};
 
 export const setups = {
   bahrain: {
