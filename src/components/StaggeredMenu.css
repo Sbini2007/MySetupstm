@@ -6,10 +6,9 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background: rgba(139, 92, 246, 0.1);
-  border: 1px solid rgba(139, 92, 246, 0.28);
-  border-radius: 0.75rem;
-  padding: 0.45rem 0.95rem;
+  background: transparent;
+  border: 0;
+  padding: 0.45rem 0.25rem;
   cursor: pointer !important;
   color: #ffffff;
   font-family: inherit;
@@ -18,14 +17,13 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
   line-height: 1;
-  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+  transition: color 0.2s ease, transform 0.15s ease;
   user-select: none;
   z-index: 60;
 }
 
 .sm-toggle:hover {
-  background: rgba(139, 92, 246, 0.2);
-  border-color: rgba(167, 139, 250, 0.55);
+  color: #c4b5fd;
   transform: translateY(-1px);
 }
 
@@ -59,37 +57,36 @@
   line-height: 1.1em;
 }
 
-/* Animated Cross Icon */
+/* Three-line menu icon */
 .sm-icon {
-  position: relative;
-  width: 13px;
-  height: 13px;
-  flex: 0 0 13px;
-  display: inline-flex;
-  align-items: center;
+  width: 16px;
+  height: 14px;
+  flex: 0 0 16px;
+  display: flex;
+  flex-direction: column;
   justify-content: center;
-  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  gap: 3px;
 }
 
 .sm-icon-line {
-  position: absolute;
-  left: 50%;
-  top: 50%;
   width: 100%;
   height: 2px;
   background: #ffffff;
   border-radius: 2px;
-  transform: translate(-50%, -50%);
   transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.sm-icon-line-v {
-  transform: translate(-50%, -50%) rotate(90deg);
+/* When Menu is Open */
+.sm-toggle.is-open .sm-icon-line:first-child {
+  transform: translateY(5px) rotate(45deg);
 }
 
-/* When Menu is Open */
-.sm-toggle.is-open .sm-icon {
-  transform: rotate(225deg);
+.sm-toggle.is-open .sm-icon-line:nth-child(2) {
+  opacity: 0;
+}
+
+.sm-toggle.is-open .sm-icon-line:last-child {
+  transform: translateY(-5px) rotate(-45deg);
 }
 
 .sm-toggle.is-open .sm-toggle-textInner {

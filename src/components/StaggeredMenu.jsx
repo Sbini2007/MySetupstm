@@ -92,7 +92,8 @@ export const StaggeredMenu = ({
         </span>
         <span className="sm-icon" aria-hidden="true">
           <span className="sm-icon-line" />
-          <span className="sm-icon-line sm-icon-line-v" />
+          <span className="sm-icon-line" />
+          <span className="sm-icon-line" />
         </span>
       </button>
 

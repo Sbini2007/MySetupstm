@@ -149,7 +149,7 @@ export default function NavBar() {
               <div className="hidden sm:flex items-center gap-2">
                 <Link
                   href="/account"
-                  className="inline-flex items-center gap-2 rounded-xl border border-white/[0.12] bg-white/[0.05] px-3 py-1.5 text-xs font-semibold text-white transition hover:border-white/30 hover:bg-white/[0.1]"
+                  className="inline-flex items-center gap-2 px-1 py-1.5 text-xs font-semibold text-white transition hover:text-violet-300"
                 >
                   <User size={13} className="text-zinc-300" />
                   <span className="max-w-[100px] truncate">
@@ -161,7 +161,7 @@ export default function NavBar() {
                   type="button"
                   onClick={logout}
                   title="Esci"
-                  className="rounded-xl p-2 text-zinc-400 hover:text-white hover:bg-white/[0.06] transition cursor-pointer"
+                  className="p-2 text-zinc-400 hover:text-white transition cursor-pointer"
                   aria-label="Esci"
                 >
                   <LogOut size={14} />
@@ -171,7 +171,7 @@ export default function NavBar() {
               <div className="hidden sm:flex items-center gap-2">
                 <Link
                   href="/account"
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-300 hover:text-white transition px-3 py-1.5 rounded-xl border border-white/10 hover:border-white/20"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-300 hover:text-white transition px-1 py-1.5"
                 >
                   <User size={13} />
                   <span>Account</span>
@@ -206,7 +206,8 @@ export default function NavBar() {
               </span>
               <span className="sm-icon" aria-hidden="true">
                 <span className="sm-icon-line" />
-                <span className="sm-icon-line sm-icon-line-v" />
+                <span className="sm-icon-line" />
+                <span className="sm-icon-line" />
               </span>
             </button>
           </div>
