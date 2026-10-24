@@ -6,7 +6,6 @@ import Link from "next/link";
 import Image from "next/image";
 import {
   X,
-  User,
   LogOut,
   ArrowUpRight,
   Home,
@@ -83,24 +82,16 @@ export default function NavBar() {
         }`}
       >
         <div className="mx-auto flex h-20 max-w-6xl items-center justify-between px-4 sm:px-6">
-          {/* Brand Logo & Title */}
-          <div className="flex items-center gap-8">
+          {/* Brand Logo */}
+          <div className="flex items-center">
             <Link href="/" className="flex items-center gap-3 group">
-              <div className="relative h-14 w-14 transition-transform duration-200 group-hover:scale-105">
+              <div className="relative h-16 w-16 transition-transform duration-200 group-hover:scale-105">
                 <Image
                   src={logoImg}
                   alt="MySetups"
                   className="h-full w-full object-contain"
                   priority
                 />
-              </div>
-              <div className="flex flex-col">
-                <span className="font-sans text-base font-black tracking-tight text-white group-hover:text-violet-400 transition">
-                  MYSETUPS
-                </span>
-                <span className="text-[9px] font-mono font-bold tracking-widest text-violet-400 uppercase">
-                  F1 26
-                </span>
               </div>
             </Link>
 
@@ -127,18 +118,6 @@ export default function NavBar() {
                 <span>DISCORD</span>
                 <ArrowUpRight size={12} />
               </a>
-              <Link
-                href="/account"
-                className="hover:text-violet-400 transition duration-150 py-1"
-              >
-                ACCOUNT
-              </Link>
-              <Link
-                href="/admin"
-                className="transition duration-150 py-1 hover:text-violet-400"
-              >
-                ADMIN
-              </Link>
             </nav>
           </div>
 
@@ -147,16 +126,6 @@ export default function NavBar() {
             {/* Desktop Account Badge / Logout */}
             {mounted && user ? (
               <div className="hidden sm:flex items-center gap-2">
-                <Link
-                  href="/account"
-                  className="inline-flex items-center gap-2 px-1 py-1.5 text-xs font-semibold text-white transition hover:text-violet-300"
-                >
-                  <User size={13} className="text-zinc-300" />
-                  <span className="max-w-[100px] truncate">
-                    {user.name?.split(" ")[0] || "Diego"}
-                  </span>
-                </Link>
-
                 <button
                   type="button"
                   onClick={logout}
@@ -169,13 +138,6 @@ export default function NavBar() {
               </div>
             ) : mounted ? (
               <div className="hidden sm:flex items-center gap-2">
-                <Link
-                  href="/account"
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-300 hover:text-white transition px-1 py-1.5"
-                >
-                  <User size={13} />
-                  <span>Account</span>
-                </Link>
                 <Link
                   href="/login?mode=register"
                   className="rounded-xl bg-gradient-to-r from-[#5227ff] to-[#8b5cf6] px-3.5 py-1.5 text-xs font-bold text-white transition hover:brightness-110 shadow-lg shadow-violet-950/30 cursor-pointer"
