@@ -483,7 +483,6 @@ export function generateFlatSetup(slug) {
     out[`${p}rear_wing`] = wings[1];
     out[`${p}diff_on`] = diff[0];
     out[`${p}diff_off`] = diff[1];
-    out[`${p}engine_braking`] = 60;
     out[`${p}front_camber`] = camber[0];
     out[`${p}rear_camber`] = camber[1];
     out[`${p}front_toe`] = toe[0];

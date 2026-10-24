@@ -72,7 +72,6 @@ export default function SetupDisplay({
       rows: [
         { label: "Differenziale in trazione", key: "diff_on", value: value("diff_on", 55), unit: "%" },
         { label: "Differenziale in rilascio", key: "diff_off", value: value("diff_off", 50), unit: "%" },
-        { label: "Freno motore", key: "engine_braking", value: value("engine_braking", 60), unit: "%" },
       ],
     },
     {

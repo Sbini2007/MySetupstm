@@ -333,21 +333,6 @@ export default function AdminSetupEditor() {
                 />
               </div>
 
-              <div className="rounded-xl border border-white/[0.05] bg-black/40 p-3">
-                <div className="flex justify-between text-xs mb-1.5">
-                  <span className="text-zinc-300 text-[11px]">Freno Motore (Engine Braking)</span>
-                  <span className="font-mono font-bold text-white text-sm">{getParamValue("engine_braking", 60)}%</span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  step="1"
-                  value={getParamValue("engine_braking", 60)}
-                  onChange={(e) => setParamValue("engine_braking", e.target.value)}
-                  className="w-full accent-white cursor-pointer"
-                />
-              </div>
             </div>
           </div>
         </div>

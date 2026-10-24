@@ -18,7 +18,6 @@ export const SETUP_SECTIONS = [
     fields: [
       { suffix: "diff_on", label: "Differenziale In Trazione (On-Throttle)", unit: "%", min: 0, max: 100, step: 1, default: 55 },
       { suffix: "diff_off", label: "Differenziale In Rilascio (Off-Throttle)", unit: "%", min: 0, max: 100, step: 1, default: 50 },
-      { suffix: "engine_braking", label: "Freno Motore (Engine Braking)", unit: "%", min: 0, max: 100, step: 1, default: 60 },
     ],
   },
   {
