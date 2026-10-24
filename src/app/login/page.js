@@ -71,15 +71,16 @@ function LoginInner() {
         // 2. Sign in with newly created credentials
         const signInRes = await signIn("credentials", {
           redirect: false,
+          callbackUrl: redirectTarget,
           email: email.trim(),
           password,
         });
 
-        if (signInRes?.error) {
-          throw new Error(signInRes.error);
+        if (!signInRes?.ok) {
+          throw new Error(signInRes?.error || "Accesso non riuscito dopo l'iscrizione.");
         }
 
-        router.replace(redirectTarget);
+        window.location.replace(signInRes.url || redirectTarget);
       } else {
         // Mode === "login"
         if (!email.trim()) {
@@ -88,15 +89,16 @@ function LoginInner() {
 
         const res = await signIn("credentials", {
           redirect: false,
+          callbackUrl: redirectTarget,
           email: email.trim(),
           password,
         });
 
-        if (res?.error) {
-          throw new Error("Credenziali non valide o password errata.");
+        if (!res?.ok) {
+          throw new Error(res?.error ? "Credenziali non valide o password errata." : "Accesso non riuscito.");
         }
 
-        router.replace(redirectTarget);
+        window.location.replace(res.url || redirectTarget);
       }
     } catch (err) {
       setErrorMsg(err.message || "Si è verificato un errore.");
