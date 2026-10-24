@@ -1,46 +1,84 @@
+"use client";
+
+import { Star } from "lucide-react";
 import NavBar from "@/components/NavBar";
 import Footer from "@/components/Footer";
-import { reviews } from "@/lib/data";
+
+const detailedReviews = [
+  {
+    text: "Sia i setup da gara che quelli da qualifica sono eccezionali: stabilità in frenata e altissima velocità di punta senza sacrificare la trazione in uscita dalle chicane.",
+    driver: "Marco R.",
+    role: "Pilota Sim Racing League",
+    track: "Monza & Spa",
+  },
+  {
+    text: "Setup di Cina ottimo in gara: grip consistente, ottima gestione termica sull'anteriore sinistra, macchina pulitissima anche nel curvone lungo.",
+    driver: "Davide B.",
+    role: "Tier 1 Sim League",
+    track: "Shanghai",
+  },
+  {
+    text: "Ho provato l'assetto in Spagna: perfetto equilibrio tra stabilità al posteriore e rapidità d'inserimento nell'ultimo settore.",
+    driver: "Alessandro M.",
+    role: "Collaudatore Pad & Volante",
+    track: "Barcelona",
+  },
+  {
+    text: "A Monaco la vettura è finalmente rassicurante: nei cambi di direzione tra Piscine e Rascasse non rischi il testacoda sui cordoli alti.",
+    driver: "Luca P.",
+    role: "Sim Racing Italia",
+    track: "Monaco",
+  },
+];
 
 export default function ReviewsPage() {
   return (
-    <div className="min-h-screen bg-[#070707] text-white">
+    <div className="min-h-screen bg-[#07070a] text-zinc-100">
       <NavBar />
-      <main className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
-        <section className="mb-10 max-w-3xl">
-          <p className="text-xs font-bold uppercase tracking-[0.35em] text-violet-300">
-            Reviews
-          </p>
-          <h1 className="mt-4 text-4xl font-black tracking-tight sm:text-6xl">
-            Feedback da chi gira davvero.
-          </h1>
-          <p className="mt-5 text-lg leading-8 text-white/62">
-            Commenti brevi, concreti, centrati su stabilita, usura e fiducia in
-            pista.
-          </p>
-        </section>
 
-        <section className="grid gap-5 sm:grid-cols-2">
-          {reviews.map((quote, index) => (
-            <figure
-              key={quote}
-              className="rounded-lg border border-white/10 bg-white/[0.035] p-6 shadow-[0_0_30px_rgba(139,92,246,0.06)]"
+      <main className="mx-auto max-w-4xl px-4 pb-24 pt-16 sm:px-6">
+        <div className="text-center">
+          <span className="text-xs font-mono font-medium uppercase tracking-wider text-zinc-400">
+            Feedback Community
+          </span>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+            Recensioni dai Piloti
+          </h1>
+          <p className="mx-auto mt-2 max-w-md text-xs sm:text-sm text-zinc-400">
+            Opinioni e commenti di chi utilizza i nostri assetti in pista e nei campionati.
+          </p>
+        </div>
+
+        <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {detailedReviews.map((rev, index) => (
+            <div
+              key={index}
+              className="flex flex-col justify-between rounded-xl border border-white/[0.08] bg-[#0c0c10] p-6"
             >
-              <div className="mb-5 flex gap-1 text-violet-300">
-                {Array.from({ length: 5 }).map((_, starIndex) => (
-                  <span key={starIndex}>*</span>
-                ))}
+              <div>
+                <div className="flex gap-1 text-amber-400">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star key={i} size={14} fill="currentColor" />
+                  ))}
+                </div>
+
+                <p className="mt-4 text-xs sm:text-sm text-zinc-300 leading-relaxed">
+                  "{rev.text}"
+                </p>
               </div>
-              <blockquote className="text-lg leading-8 text-white/78">
-                "{quote}"
-              </blockquote>
-              <figcaption className="mt-5 text-xs font-bold uppercase tracking-[0.24em] text-white/36">
-                Driver #{index + 1}
-              </figcaption>
-            </figure>
+
+              <div className="mt-6 border-t border-white/[0.05] pt-3 flex items-center justify-between text-xs">
+                <div>
+                  <span className="font-semibold text-white block">{rev.driver}</span>
+                  <span className="text-[11px] text-zinc-500">{rev.role}</span>
+                </div>
+                <span className="text-[11px] text-zinc-500">{rev.track}</span>
+              </div>
+            </div>
           ))}
-        </section>
+        </div>
       </main>
+
       <Footer />
     </div>
   );

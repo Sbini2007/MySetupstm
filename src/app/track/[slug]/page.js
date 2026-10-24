@@ -2,74 +2,59 @@
 
 import { useMemo, useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
 import Image from "next/image";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import NavBar from "@/components/NavBar";
 import Footer from "@/components/Footer";
 import SetupDisplay from "@/components/SetupDisplay";
 import { tracks } from "@/lib/data";
-import { emptyFlatSetupForSlug } from "@/lib/setup-keys";
+import { generateFlatSetup, trackProfiles } from "@/lib/default-setups";
 
 export default function TrackDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { data: session, status } = useSession();
-  const [mounted, setMounted] = useState(false);
-  const [setup, setSetup] = useState(null);
-  const [loadError, setLoadError] = useState(null);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const premium = Boolean(session?.user?.premium);
-  const unlocked = mounted && status === "authenticated" && premium;
-
-  const track = useMemo(() => tracks.find((item) => item.slug === params.slug), [params.slug]);
+  const track = useMemo(() => tracks.find((item) => item.slug === params.slug) || tracks[0], [params.slug]);
   const trackIndex = useMemo(() => {
     const i = tracks.findIndex((item) => item.slug === params.slug);
-    return i >= 0 ? i + 1 : 0;
+    return i >= 0 ? i + 1 : 1;
   }, [params.slug]);
+  const profile = trackProfiles[track.slug] || trackProfiles["italy-monza"];
+
+  const [setup, setSetup] = useState(() => generateFlatSetup(track.slug));
 
   const loadSetup = useCallback(async () => {
-    if (!params.slug || !unlocked) return;
-    setLoadError(null);
+    if (!params.slug) return;
     try {
-      const res = await fetch(`/api/setups/${params.slug}`, { credentials: "include", cache: "no-store" });
-      const data = await res.json();
-      if (!res.ok) {
-        if (res.status === 403 || res.status === 401) {
-          setLoadError("premium");
-          setSetup(null);
-          return;
+      const res = await fetch(`/api/setups/${params.slug}`, { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.setup) {
+          setSetup(data.setup);
         }
-        setSetup(emptyFlatSetupForSlug());
-        return;
       }
-      setSetup(data.setup || emptyFlatSetupForSlug());
     } catch {
-      setSetup(emptyFlatSetupForSlug());
+      // keep fallback
     }
-  }, [params.slug, unlocked]);
+  }, [params.slug]);
 
   useEffect(() => {
     loadSetup();
-    const timer = setInterval(loadSetup, 30000);
-    return () => clearInterval(timer);
   }, [loadSetup]);
 
   if (!track) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] text-white">
+      <div className="min-h-screen bg-[#07070a] text-zinc-100 flex flex-col justify-between">
         <NavBar />
         <main className="mx-auto max-w-5xl px-4 py-20 text-center sm:px-6">
-          <h1 className="text-4xl font-semibold">Track not found</h1>
-          <p className="mt-4 text-white/60">Return to the track list to select another circuit.</p>
+          <h1 className="text-2xl font-bold">Circuito non trovato</h1>
+          <p className="mt-2 text-xs text-zinc-400">Ritorna alla lista dei setup per selezionare un tracciato.</p>
           <button
-            onClick={() => router.push("/tracks")}
-            className="mt-8 inline-flex rounded-full bg-violet-500 px-6 py-3 font-semibold uppercase tracking-[0.25em] text-white transition hover:bg-violet-400"
+            onClick={() => router.push("/setups")}
+            className="mt-6 rounded-lg bg-white px-4 py-2 text-xs font-semibold text-black transition hover:bg-zinc-200"
           >
-            Back to tracks
+            Tutti i setup
           </button>
         </main>
         <Footer />
@@ -77,78 +62,76 @@ export default function TrackDetailPage() {
     );
   }
 
-  const headerLabel = `R${String(trackIndex).padStart(2, "0")} ${track.country}`;
+  const headerLabel = `Round ${String(trackIndex).padStart(2, "0")} · ${track.country.toUpperCase()}`;
   const subtitle = track.circuit;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white">
-      <NavBar />
-      <main className="mx-auto max-w-3xl px-4 pb-16 pt-24 sm:px-6 lg:max-w-4xl">
-        {!unlocked ? (
-          <section className="rounded-[28px] border border-white/10 bg-[#101010]/90 p-8 shadow-[0_0_40px_rgba(124,58,237,0.1)]">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-              <span className="grid h-14 w-20 place-items-center rounded-xl border border-white/10 bg-white/5 p-2">
-                <Image
-                  src={`/flags/${track.flagCode}.svg`}
-                  alt={`${track.country} flag`}
-                  width={52}
-                  height={34}
-                  style={{ width: "auto", height: "auto" }}
-                  className="h-9 w-14 object-contain"
-                />
-              </span>
-              <div>
-                <p className="text-3xl font-black text-white">{headerLabel}</p>
-                <p className="mt-1 text-white/50">{subtitle}</p>
-              </div>
-            </div>
-            <div className="mt-10 rounded-2xl border border-violet-400/15 bg-[#111111] p-8 text-center">
-              <p className="text-sm uppercase tracking-[0.35em] text-violet-300/80">Premium</p>
-              <h2 className="mt-4 text-2xl font-bold text-white">Setup Gara / Qualifica / Bagnato</h2>
-              <p className="mt-3 text-white/58">Accedi e attiva il premium per vedere tutti i valori aggiornati dall&apos;admin.</p>
-              <button
-                onClick={() => router.push(session ? "/checkout" : "/login")}
-                className="mt-8 inline-flex rounded-full bg-violet-500 px-6 py-3 text-sm font-semibold uppercase tracking-[0.25em] text-white transition hover:bg-violet-400"
-              >
-                {session && !premium ? "Paga con PayPal" : "Accedi"}
-              </button>
-            </div>
-          </section>
-        ) : loadError === "premium" ? (
-          <section className="rounded-[28px] border border-violet-400/15 bg-[#111111] p-8 text-center">
-            <p className="text-violet-200">Premium richiesto per caricare i setup.</p>
-            <button
-              type="button"
-              onClick={() => router.push("/checkout")}
-              className="mt-6 rounded-full bg-violet-500 px-6 py-3 font-bold text-white"
+    <div className="min-h-screen bg-[#07070a] text-zinc-100 flex flex-col justify-between">
+      <div>
+        <NavBar />
+        <main className="mx-auto max-w-5xl px-4 pb-24 pt-10 sm:px-6">
+          <div className="mb-6 flex items-center justify-between">
+            <Link
+              href="/setups"
+              className="inline-flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition"
             >
-              Checkout
-            </button>
-          </section>
-        ) : setup ? (
-          <section className="rounded-[28px] border border-white/10 bg-[#101010]/90 p-6 sm:p-8">
-            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end">
-              <span className="grid h-16 w-24 shrink-0 place-items-center rounded-xl border border-white/10 bg-white/5 p-2">
-                <Image
-                  src={`/flags/${track.flagCode}.svg`}
-                  alt={`${track.country} flag`}
-                  width={56}
-                  height={36}
-                  style={{ width: "auto", height: "auto" }}
-                  className="h-10 w-16 object-contain"
-                />
-              </span>
-              <div>
-                <p className="text-4xl font-black tracking-tight text-white sm:text-5xl">{headerLabel}</p>
-                <p className="mt-2 text-sm text-white/48 sm:text-base">{subtitle}</p>
+              <ArrowLeft size={14} />
+              <span>Lista Setup</span>
+            </Link>
+
+            <span className="rounded-md border border-white/15 bg-white/[0.04] px-2.5 py-0.5 font-mono text-[11px] font-bold text-zinc-300">
+              F1 26 SPEC
+            </span>
+          </div>
+
+          <section className="space-y-6">
+            <div className="rounded-2xl border border-white/[0.08] bg-[#0c0d14] p-6 sm:p-8 relative overflow-hidden">
+
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5 relative z-10">
+                <div className="flex items-center gap-4">
+                  <div className="grid h-14 w-20 shrink-0 place-items-center rounded-xl border border-white/[0.08] bg-black/40 p-2">
+                    <Image
+                      src={`/flags/${track.flagCode}.svg`}
+                      alt=""
+                      width={48}
+                      height={32}
+                      className="h-8 w-12 rounded-[2px] object-cover ring-1 ring-white/10"
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 text-[11px] text-zinc-500 font-mono">
+                      <span className="text-zinc-300 font-bold">{headerLabel}</span>
+                      <span>·</span>
+                      <span className="text-zinc-400">F1 2026</span>
+                    </div>
+                    <h1 className="mt-1 text-2xl font-bold tracking-tight text-white sm:text-3xl">
+                      {subtitle}
+                    </h1>
+                    <p className="text-xs text-zinc-400 mt-0.5">{track.type}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 self-start sm:self-auto border-t sm:border-t-0 border-white/[0.06] pt-3 sm:pt-0">
+                  <div className="text-left sm:text-right">
+                    <span className="text-[10px] font-mono uppercase text-zinc-500 block">Top Speed</span>
+                    <span className="font-mono text-lg font-bold text-emerald-400">
+                      {profile.topSpeed}
+                    </span>
+                  </div>
+                  <div className="text-left sm:text-right border-l border-white/[0.08] pl-4">
+                    <span className="text-[10px] font-mono uppercase text-zinc-500 block">Carico Aero</span>
+                    <span className="font-mono text-sm font-semibold text-zinc-300">
+                      {profile.downforce}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
-            <SetupDisplay setup={setup} onBack={() => router.push("/circuiti")} />
+
+            <SetupDisplay setup={setup} onBack={() => router.push("/setups")} trackName={track.circuit} />
           </section>
-        ) : (
-          <p className="text-center text-white/50">Caricamento setup…</p>
-        )}
-      </main>
+        </main>
+      </div>
       <Footer />
     </div>
   );

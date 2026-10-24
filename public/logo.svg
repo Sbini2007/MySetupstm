@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 400" width="700" height="400" fill="none">
+  <!-- APEX F1 SIM RACING EMBLEM -->
+  <g fill="#ffffff" fill-rule="evenodd">
+    <!-- Top Speed Vortex / Rear Wing DRS Profile -->
+    <path d="M 160 85 L 540 85 C 575 85 605 98 625 118 L 595 132 C 580 118 560 110 530 110 L 170 110 C 140 110 120 118 105 132 L 75 118 C 95 98 125 85 160 85 Z" />
+    
+    <!-- Central Formula 1 Monogram "F1" -->
+    <!-- Letter F -->
+    <path d="M 180 150 L 320 150 L 310 185 L 245 185 L 235 210 L 295 210 L 285 245 L 225 245 L 200 320 L 140 320 L 180 150 Z" />
+    <!-- Number 1 with dynamic slant -->
+    <path d="M 345 190 L 390 150 L 440 150 L 385 320 L 325 320 L 360 215 L 330 235 Z" />
+
+    <!-- Right Wing Endplate Aerodynamic Slats -->
+    <path d="M 475 160 L 595 160 L 580 190 L 465 190 Z" />
+    <path d="M 460 205 L 570 205 L 555 235 L 450 235 Z" />
+    <path d="M 445 250 L 545 250 L 530 280 L 435 280 Z" />
+    <path d="M 430 295 L 520 295 L 505 320 L 420 320 Z" />
+
+    <!-- Left Aggressive Velocity Trails -->
+    <polygon points="110,170 135,170 95,290 70,290" />
+    <polygon points="80,190 100,190 65,280 45,280" />
+
+    <!-- Lower Ground Effect Diffuser Line -->
+    <path d="M 130 345 L 570 345 L 545 362 L 155 362 Z" />
+  </g>
+</svg>

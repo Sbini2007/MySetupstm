@@ -1,11 +1,12 @@
 "use client";
 
-import { useSession, signIn } from "next-auth/react";
+import { useSession, signIn } from "@/lib/client-auth";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import NavBar from "@/components/NavBar";
-import { Check, Zap } from "lucide-react";
+import Footer from "@/components/Footer";
+import { Check, ShieldCheck, Lock } from "lucide-react";
 
 export default function CheckoutPage() {
   const { data: session, status, update } = useSession();
@@ -17,7 +18,7 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     if (!clientId) {
-      setConfigError("Configure NEXT_PUBLIC_PAYPAL_CLIENT_ID and PayPal server credentials in .env.local");
+      setConfigError("PayPal SDK in modalità sandbox per sviluppo. Configura NEXT_PUBLIC_PAYPAL_CLIENT_ID per completare l'ordine reale.");
       return;
     }
     if (typeof window === "undefined" || window.paypal) {
@@ -28,7 +29,7 @@ export default function CheckoutPage() {
     script.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(clientId)}&currency=EUR&intent=capture`;
     script.async = true;
     script.onload = () => setSdkReady(true);
-    script.onerror = () => setConfigError("Could not load PayPal SDK");
+    script.onerror = () => setConfigError("Impossibile caricare il componente PayPal.");
     document.body.appendChild(script);
   }, [clientId]);
 
@@ -44,7 +45,7 @@ export default function CheckoutPage() {
       createOrder: async () => {
         const res = await fetch("/api/paypal/create-order", { method: "POST" });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Create order failed");
+        if (!res.ok) throw new Error(data.error || "Creazione ordine non riuscita");
         return data.id;
       },
       onApprove: async (data) => {
@@ -54,9 +55,9 @@ export default function CheckoutPage() {
           body: JSON.stringify({ orderID: data.orderID }),
         });
         const out = await res.json();
-        if (!res.ok) throw new Error(out.error || "Capture failed");
+        if (!res.ok) throw new Error(out.error || "Transazione non riuscita");
         await update();
-        router.push("/setups");
+        router.push("/circuiti");
       },
     });
     buttons.render(el);
@@ -70,71 +71,100 @@ export default function CheckoutPage() {
   }, [sdkReady, status, session?.user?.email, update, router]);
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-[#07070a] text-zinc-100">
       <NavBar />
-      <main className="relative mx-auto max-w-lg px-4 pb-24 pt-28">
-        <p className="text-center text-sm font-bold uppercase tracking-[0.35em] text-violet-300">Checkout</p>
-        <h1 className="mt-4 text-center text-4xl font-black">Premium access</h1>
-        <p className="mt-3 text-center text-white/55">
-          One-time payment via PayPal. Your purchase is linked to <span className="text-white/85">{status === "authenticated" ? session.user.email : "your account"}</span>.
-        </p>
+      <main className="mx-auto max-w-lg px-4 pb-24 pt-16 sm:px-6">
+        <div className="text-center">
+          <span className="text-xs font-mono font-medium uppercase tracking-wider text-zinc-400">
+            Cassa
+          </span>
+          <h1 className="mt-2 text-2xl font-bold tracking-tight text-white sm:text-3xl">
+            Sblocca MySetups Pro
+          </h1>
+          <p className="mt-1 text-xs text-zinc-400">
+            Pagamento unico di 15€ associato al tuo profilo per sbloccare tutti i 24 circuiti.
+          </p>
+        </div>
 
-        <div className="mt-10 rounded-2xl border border-violet-500/25 bg-white/4 p-6">
-          <div className="flex items-end justify-between gap-4">
+        {/* Order Summary Box */}
+        <div className="mt-8 rounded-xl border border-white/[0.08] bg-[#0c0c10] p-6">
+          <div className="flex items-center justify-between border-b border-white/[0.06] pb-4">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.3em] text-white/45">Total</p>
-              <p className="mt-1 text-4xl font-black text-violet-400">EUR 15</p>
+              <h3 className="text-sm font-semibold text-white">Season Pass 2026</h3>
+              <p className="text-[11px] text-zinc-500">24 Circuiti F1</p>
             </div>
-            <Zap className="text-violet-400/50" size={36} />
+            <div className="text-right">
+              <span className="text-2xl font-bold text-white">15€</span>
+              <span className="block text-[10px] text-zinc-500 uppercase">una tantum</span>
+            </div>
           </div>
-          <ul className="mt-6 space-y-2 text-sm text-white/75">
-            {["Full setup library", "Premium guides & notes", "Discord support"].map((item) => (
+
+          <ul className="mt-4 space-y-2 text-xs text-zinc-400">
+            {[
+              "Accesso completo a tutti i 24 circuiti F1",
+              "Varianti Gara, Qualifica e Wet per ciascuna pista",
+              "Guide tecniche ed esportazione assetto immediata",
+              "Ruolo Pro sul server Discord",
+            ].map((item) => (
               <li key={item} className="flex items-center gap-2">
-                <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-violet-500/20 text-violet-200">
-                  <Check size={12} />
-                </span>
-                {item}
+                <Check size={12} className="text-emerald-400 shrink-0" />
+                <span>{item}</span>
               </li>
             ))}
           </ul>
         </div>
 
-        {status === "loading" ? (
-          <p className="mt-10 text-center text-white/50">Loading session…</p>
-        ) : status === "unauthenticated" ? (
-          <div className="mt-10 space-y-4 text-center">
-            <p className="text-white/60">Sign in with Google or Discord before paying so we can unlock the correct account.</p>
-            <button
-              type="button"
-              onClick={() => signIn("google", { callbackUrl: "/checkout" })}
-              className="w-full rounded-xl bg-white px-6 py-3.5 text-sm font-black text-gray-900 transition hover:bg-white/90"
-            >
-              Continue with Google
-            </button>
-            <button
-              type="button"
-              onClick={() => signIn("discord", { callbackUrl: "/checkout" })}
-              className="w-full rounded-xl border border-white/15 bg-[#5865F2] px-6 py-3.5 text-sm font-black text-white transition hover:bg-[#4752c4]"
-            >
-              Continue with Discord
-            </button>
-            <Link href="/login" className="inline-block text-sm text-violet-300 hover:text-violet-200">
-              Other sign-in options
-            </Link>
-          </div>
-        ) : configError ? (
-          <p className="mt-10 text-center text-sm text-amber-200/90">{configError}</p>
-        ) : (
-          <div className="mt-10">
-            <p className="mb-4 text-center text-sm text-white/50">Pay with PayPal</p>
-            <div ref={paypalHostRef} className="flex min-h-[140px] justify-center" />
-          </div>
-        )}
+        {/* Auth or Payment Action */}
+        <div className="mt-6 rounded-xl border border-white/[0.08] bg-[#0c0c10] p-6">
+          {status === "loading" ? (
+            <p className="py-4 text-center text-xs text-zinc-500">Verifica account...</p>
+          ) : status === "unauthenticated" ? (
+            <div className="space-y-3 text-center">
+              <p className="text-xs text-zinc-400">
+                Accedi per associare la licenza al tuo profilo prima di procedere:
+              </p>
+              <button
+                type="button"
+                onClick={() => signIn("google", { callbackUrl: "/checkout" })}
+                className="w-full rounded-lg bg-white py-2.5 text-xs font-semibold text-black transition hover:bg-zinc-200"
+              >
+                Accedi con Google
+              </button>
+              <button
+                type="button"
+                onClick={() => signIn("discord", { callbackUrl: "/checkout" })}
+                className="w-full rounded-lg bg-[#5865F2] py-2.5 text-xs font-semibold text-white transition hover:bg-[#4752c4]"
+              >
+                Accedi con Discord
+              </button>
+            </div>
+          ) : (
+            <div>
+              <div className="mb-4 flex items-center justify-between border-b border-white/[0.06] pb-3 text-xs">
+                <span className="text-zinc-500">Account collegato:</span>
+                <span className="font-medium text-zinc-200 truncate max-w-[200px]">{session?.user?.email}</span>
+              </div>
 
-        <p className="mt-10 text-center text-xs text-white/35">
-          After payment, your session refreshes automatically. If premium does not unlock, refresh the page once.
-        </p>
+              {configError ? (
+                <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-3 text-center text-xs text-amber-200">
+                  {configError}
+                </div>
+              ) : (
+                <div>
+                  <p className="mb-3 text-center text-xs text-zinc-500">Paga con PayPal</p>
+                  <div ref={paypalHostRef} className="flex min-h-[100px] justify-center" />
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="mt-4 flex items-center justify-center gap-1.5 text-[11px] text-zinc-500 text-center">
+          <ShieldCheck size={13} className="text-emerald-400" />
+          <span>Pagamento sicuro protetto da crittografia</span>
+        </div>
       </main>
+      <Footer />
     </div>
   );
 }

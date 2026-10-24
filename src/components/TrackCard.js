@@ -1,51 +1,104 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { ArrowUpRight, Gauge, Wind, Zap } from "lucide-react";
 
-export default function TrackCard({ track, locked }) {
+function getTrackAeroDetails(track) {
+  const t = (track.type || "").toLowerCase();
+  const slug = track.slug || "";
+
+  if (slug === "monza" || slug === "italy-monza" || slug === "usa-las-vegas" || slug === "belgium" || slug === "saudi-arabia" || slug === "azerbaijan") {
+    return { level: 1, label: "Basso Carico", wing: "18 / 14" };
+  }
+  if (slug === "monaco" || slug === "hungary" || slug === "singapore" || slug === "netherlands") {
+    return { level: 5, label: "Max Carico", wing: "48 / 44" };
+  }
+  if (t.includes("alto") || slug === "japan" || slug === "united-kingdom" || slug === "qatar") {
+    return { level: 4, label: "Alto Carico", wing: "38 / 34" };
+  }
+  return { level: 3, label: "Medio Carico", wing: "28 / 24" };
+}
+
+export default function TrackCard({ track, locked, index }) {
+  const roundStr = index !== undefined ? `R${String(index + 1).padStart(2, "0")}` : null;
+  const aero = getTrackAeroDetails(track);
+
   return (
     <Link
-      href={locked ? "/login" : `/circuiti/${track.slug}`}
-      className="group relative block min-h-52 overflow-hidden rounded-lg border border-white/10 bg-[#101010] p-5 transition duration-300 hover:-translate-y-1 hover:border-violet-400/35 hover:shadow-[0_0_34px_rgba(139,92,246,0.18)]"
+      href={`/circuiti/${track.slug}`}
+      className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-b from-[#0f1017] to-[#09090d] p-5 transition-all duration-300 hover:-translate-y-1 hover:border-white/30 hover:shadow-[0_10px_30px_rgba(255,255,255,0.03)]"
     >
-      <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(139,92,246,0.16),transparent_42%,rgba(168,85,247,0.08))] opacity-0 transition group-hover:opacity-100" />
+      <div>
+        {/* Header: Round + Flag + Season Tag */}
+        <div className="flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2">
+            {roundStr && (
+              <span className="font-mono text-[11px] font-bold text-zinc-200 bg-white/[0.05] px-2 py-0.5 rounded border border-white/15">
+                {roundStr}
+              </span>
+            )}
+            <div className="flex items-center gap-1.5">
+              <Image
+                src={`/flags/${track.flagCode}.svg`}
+                alt=""
+                width={20}
+                height={14}
+                className="h-3.5 w-5 rounded-[2px] object-cover ring-1 ring-white/10"
+              />
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-300">
+                {track.country}
+              </span>
+            </div>
+          </div>
 
-      <div className="relative flex items-start justify-between gap-4">
-        <div className="grid h-12 w-16 place-items-center rounded-md border border-white/10 bg-white/4 p-2">
-          <Image
-            src={`/flags/${track.flagCode}.svg`}
-            alt={`${track.country} flag`}
-            width={42}
-            height={28}
-            style={{ width: "auto", height: "auto" }}
-            className="h-7 w-11 object-contain"
-          />
-        </div>
-        <span className="rounded-md border border-white/10 bg-black/30 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-white/46">
-          {track.type || track.country}
-        </span>
-      </div>
-
-      <div className="relative mt-8">
-        <p className="text-xs font-bold uppercase tracking-[0.24em] text-violet-200/55">
-          {track.country}
-        </p>
-        <h3 className="mt-3 text-2xl font-black leading-tight text-white">
-          {track.circuit}
-        </h3>
-      </div>
-
-      <div className="absolute inset-x-5 bottom-5 flex items-center justify-between border-t border-white/10 pt-4 text-xs font-bold uppercase tracking-[0.2em] text-white/42">
-        <span>{locked ? "Preview" : "Apri setup"}</span>
-        <span className="text-violet-300">01</span>
-      </div>
-
-      {locked ? (
-        <div className="pointer-events-none absolute inset-0 grid place-items-center bg-black/55 opacity-0 backdrop-blur-sm transition group-hover:opacity-100">
-          <span className="rounded-lg border border-violet-400/25 bg-black/80 px-4 py-2 text-xs font-black uppercase tracking-[0.22em] text-white">
-            Login richiesto
+          <span className="font-mono text-[10px] text-zinc-500 font-medium">
+            2026 SPEC
           </span>
         </div>
-      ) : null}
+
+        {/* Circuit Name & Type */}
+        <div className="mt-4">
+          <h3 className="text-base font-bold text-white transition-colors duration-200 group-hover:text-zinc-200">
+            {track.circuit}
+          </h3>
+          <p className="mt-1 text-xs text-zinc-400 font-medium">
+            {track.type}
+          </p>
+        </div>
+
+        {/* Telemetry specs preview */}
+        <div className="mt-4 grid grid-cols-2 gap-2 rounded-xl border border-white/[0.04] bg-white/[0.02] p-2.5">
+          <div className="flex flex-col">
+            <span className="text-[10px] font-mono text-zinc-500 uppercase">Carico Aero</span>
+            <span className="font-mono text-xs font-semibold text-zinc-200">{aero.label}</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[10px] font-mono text-zinc-500 uppercase">Ali Base</span>
+            <span className="font-mono text-xs font-semibold text-cyan-300">{aero.wing}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer: Setup Badges & Action */}
+      <div className="mt-5 flex items-center justify-between border-t border-white/[0.06] pt-3.5 text-xs">
+        <div className="flex items-center gap-1.5">
+          <span className="rounded-md bg-white/[0.04] border border-white/[0.05] px-2 py-0.5 text-[10px] font-medium text-zinc-300">
+            Gara
+          </span>
+          <span className="rounded-md bg-white/[0.04] border border-white/[0.05] px-2 py-0.5 text-[10px] font-medium text-zinc-300">
+            Quali
+          </span>
+          <span className="rounded-md bg-white/[0.04] border border-white/[0.05] px-2 py-0.5 text-[10px] font-medium text-zinc-300">
+            Wet
+          </span>
+        </div>
+
+        <span className="inline-flex items-center gap-1 text-xs font-semibold text-zinc-300 group-hover:text-white transition-colors">
+          <span>Assetto</span>
+          <ArrowUpRight size={14} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 text-zinc-400 group-hover:text-white" />
+        </span>
+      </div>
     </Link>
   );
 }

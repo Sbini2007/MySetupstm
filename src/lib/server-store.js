@@ -60,30 +60,111 @@ export function upsertServerUser(partial) {
 
   if (idx >= 0) {
     const prev = users[idx];
+    const role = partial.role !== undefined ? partial.role : prev.role || (prev.admin ? "admin" : prev.premium ? "subscriber" : "user");
     users[idx] = {
       ...prev,
       ...partial,
       email: partial.email,
-      premium: partial.premium !== undefined ? partial.premium : prev.premium,
-      admin: partial.admin !== undefined ? partial.admin : prev.admin || adminFromList,
+      role: adminFromList ? "admin" : role,
+      premium: partial.premium !== undefined ? partial.premium : (role !== "user" ? true : prev.premium),
+      admin: partial.admin !== undefined ? partial.admin : (adminFromList || role === "admin" || prev.admin),
+      createdAt: prev.createdAt || partial.createdAt || new Date().toISOString(),
+      password: partial.password || prev.password,
       image: sanitizeStoredImage(partial.image ?? prev.image),
       oauthImage: sanitizeStoredImage(partial.oauthImage ?? prev.oauthImage ?? partial.image ?? prev.image),
     };
   } else {
+    const role = adminFromList ? "admin" : partial.role || (partial.admin ? "admin" : partial.premium ? "subscriber" : "user");
     users.unshift({
       id: Date.now(),
-      premium: partial.premium ?? false,
-      admin: partial.admin ?? adminFromList,
+      role,
+      premium: partial.premium ?? (role !== "user"),
+      admin: partial.admin ?? (adminFromList || role === "admin"),
       name: partial.name || partial.email.split("@")[0],
       email: partial.email,
+      createdAt: partial.createdAt || new Date().toISOString(),
+      password: partial.password || null,
       image: sanitizeStoredImage(partial.image),
       oauthName: partial.oauthName ?? partial.name,
       oauthImage: sanitizeStoredImage(partial.oauthImage ?? partial.image),
-      provider: partial.provider,
+      provider: partial.provider || "credentials",
     });
   }
   saveServerUsers(users);
   return users;
+}
+
+export function registerServerUser({ name, email, password }) {
+  if (!email) throw new Error("Email richiesta");
+  const normalizedEmail = String(email).trim().toLowerCase();
+  const existing = getServerUserByEmail(normalizedEmail);
+  if (existing) {
+    throw new Error("Un account con questa email esiste già");
+  }
+
+  const adminFromList = isAdminEmail(normalizedEmail);
+  const role = adminFromList ? "admin" : "user";
+  const newUser = {
+    id: Date.now(),
+    name: (name && String(name).trim()) || normalizedEmail.split("@")[0],
+    email: normalizedEmail,
+    password: password || "",
+    role,
+    premium: adminFromList,
+    admin: adminFromList,
+    createdAt: new Date().toISOString(),
+    provider: "server-credentials",
+    image: "",
+  };
+
+  const users = getServerUsers();
+  users.unshift(newUser);
+  saveServerUsers(users);
+  return newUser;
+}
+
+export function deleteServerUser(email) {
+  if (!email) return false;
+  const lower = String(email).trim().toLowerCase();
+  const users = getServerUsers();
+  const next = users.filter((u) => String(u.email || "").toLowerCase() !== lower);
+  if (next.length !== users.length) {
+    saveServerUsers(next);
+    return true;
+  }
+  return false;
+}
+
+export function setServerUserRole(email, role) {
+  const users = getServerUsers();
+  const lower = String(email || "").toLowerCase();
+  const adminFromList = isAdminEmail(email);
+  const targetRole = adminFromList ? "admin" : role;
+  const isPrivileged = targetRole === "admin" || targetRole === "editor" || targetRole === "vip" || targetRole === "subscriber";
+
+  const idx = users.findIndex((u) => String(u.email || "").toLowerCase() === lower);
+  if (idx === -1) {
+    upsertServerUser({
+      email,
+      name: String(email).split("@")[0],
+      role: targetRole,
+      premium: isPrivileged,
+      admin: targetRole === "admin",
+    });
+    return getServerUsers();
+  }
+
+  const next = users.map((u) => {
+    if (String(u.email || "").toLowerCase() !== lower) return u;
+    return {
+      ...u,
+      role: targetRole,
+      premium: isPrivileged,
+      admin: targetRole === "admin" || adminFromList,
+    };
+  });
+  saveServerUsers(next);
+  return next;
 }
 
 export function setServerUserPremium(email, premium) {
@@ -91,10 +172,14 @@ export function setServerUserPremium(email, premium) {
   const lower = String(email || "").toLowerCase();
   const idx = users.findIndex((u) => String(u.email || "").toLowerCase() === lower);
   if (idx === -1) {
-    upsertServerUser({ email, name: String(email).split("@")[0], premium });
+    upsertServerUser({ email, name: String(email).split("@")[0], premium, role: premium ? "subscriber" : "user" });
     return getServerUsers();
   }
-  const next = users.map((u) => (String(u.email || "").toLowerCase() === lower ? { ...u, premium } : u));
+  const next = users.map((u) => {
+    if (String(u.email || "").toLowerCase() !== lower) return u;
+    const role = premium ? (u.role === "admin" ? "admin" : u.role === "vip" ? "vip" : "subscriber") : "user";
+    return { ...u, premium, role };
+  });
   saveServerUsers(next);
   return next;
 }
@@ -104,10 +189,14 @@ export function setServerUserAdminFlag(email, admin) {
   const lower = String(email || "").toLowerCase();
   const idx = users.findIndex((u) => String(u.email || "").toLowerCase() === lower);
   if (idx === -1) {
-    upsertServerUser({ email, name: String(email).split("@")[0], admin });
+    upsertServerUser({ email, name: String(email).split("@")[0], admin, role: admin ? "admin" : "user", premium: admin });
     return getServerUsers();
   }
-  const next = users.map((u) => (String(u.email || "").toLowerCase() === lower ? { ...u, admin } : u));
+  const next = users.map((u) => {
+    if (String(u.email || "").toLowerCase() !== lower) return u;
+    const role = admin ? "admin" : (u.premium ? "subscriber" : "user");
+    return { ...u, admin, role };
+  });
   saveServerUsers(next);
   return next;
 }

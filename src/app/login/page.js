@@ -1,31 +1,38 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useEffect } from "react";
-import { signIn, signOut, useSession } from "next-auth/react";
+import Image from "next/image";
+import { Suspense, useEffect, useState } from "react";
+import logoImg from "@/assets/images/logo.png";
+import { signIn, useSession } from "@/lib/client-auth";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useLanguage } from "@/lib/i18n";
+import { Lock, Sparkles, UserPlus, LogIn, Check, AlertCircle, ArrowRight, Shield } from "lucide-react";
+import NavBar from "@/components/NavBar";
+import Footer from "@/components/Footer";
 
 function LoginInner() {
-  const { t } = useLanguage();
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const reauth = searchParams.get("reauth") === "1";
-  const redirectTarget = searchParams.get("redirect") || "/account";
+  const initialMode = searchParams.get("mode") === "register" ? "register" : "login";
+  const [mode, setMode] = useState(initialMode); // "login" | "register"
+  const redirectTarget = searchParams.get("redirect") || "/setups";
 
-  useEffect(() => {
-    if (!reauth) return;
-    const id = window.setTimeout(() => {
-      const el = document.getElementById("login-google-focus");
-      el?.focus();
-    }, 300);
-    return () => clearTimeout(id);
-  }, [reauth]);
+  // Form states
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
 
   useEffect(() => {
     if (status === "authenticated" && session?.user) {
-      router.replace(redirectTarget);
+      if (session.user.admin && redirectTarget.startsWith("/admin")) {
+        router.replace("/admin");
+      } else {
+        router.replace(redirectTarget);
+      }
     }
   }, [status, session, router, redirectTarget]);
 
@@ -33,72 +40,296 @@ function LoginInner() {
     return null;
   }
 
+  const handleCredentialsSubmit = async (e) => {
+    e.preventDefault();
+    setErrorMsg("");
+    setSuccessMsg("");
+    setLoading(true);
+
+    try {
+      if (mode === "register") {
+        if (!email.trim() || !email.includes("@")) {
+          throw new Error("Inserisci un'email valida.");
+        }
+        if (password.length < 4) {
+          throw new Error("La password deve avere almeno 4 caratteri.");
+        }
+
+        // 1. Call server registration endpoint
+        const regRes = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: name.trim(), email: email.trim(), password }),
+        });
+        const regData = await regRes.json();
+        if (!regRes.ok || !regData.ok) {
+          throw new Error(regData.error || "Errore durante l'iscrizione");
+        }
+
+        setSuccessMsg("Iscrizione completata! Accesso in corso...");
+
+        // 2. Sign in with newly created credentials
+        const signInRes = await signIn("credentials", {
+          redirect: false,
+          email: email.trim(),
+          password,
+        });
+
+        if (signInRes?.error) {
+          throw new Error(signInRes.error);
+        }
+
+        router.replace(redirectTarget);
+      } else {
+        // Mode === "login"
+        if (!email.trim()) {
+          throw new Error("Inserisci la tua email.");
+        }
+
+        const res = await signIn("credentials", {
+          redirect: false,
+          email: email.trim(),
+          password,
+        });
+
+        if (res?.error) {
+          throw new Error("Credenziali non valide o password errata.");
+        }
+
+        router.replace(redirectTarget);
+      }
+    } catch (err) {
+      setErrorMsg(err.message || "Si è verificato un errore.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleQuickAdminLogin = async () => {
+    setErrorMsg("");
+    setLoading(true);
+    try {
+      const res = await signIn("credentials", {
+        redirect: false,
+        email: "diegocruciani40@gmail.com",
+        password: "",
+      });
+      if (res?.error) {
+        throw new Error(res.error);
+      }
+      router.replace("/admin");
+    } catch (err) {
+      setErrorMsg(err.message || "Errore accesso admin");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <main className="min-h-screen bg-black px-6 text-white">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_center,rgba(139,92,246,0.18),transparent_58%)]" />
+    <div className="min-h-screen bg-[#050508] text-white">
+      <NavBar />
+      <main className="relative mx-auto flex min-h-[85vh] max-w-md items-center justify-center px-4 py-16">
+        <div className="w-full rounded-3xl border border-white/10 bg-[#0c0d16] p-8 shadow-2xl relative overflow-hidden">
+          {/* Subtle gradient glow */}
+          <div className="absolute -top-24 -left-24 h-48 w-48 rounded-full bg-white/[0.03] blur-3xl pointer-events-none" />
 
-      <section className="relative mx-auto flex min-h-screen max-w-md items-center justify-center pt-24">
-        <div className="w-full rounded-2xl border border-violet-500/20 bg-[#111111]/90 p-8 shadow-[0_0_70px_rgba(139,92,246,0.16)]">
-          <p className="text-center text-sm uppercase tracking-[0.35em] text-violet-300">MySetups</p>
-          <h1 className="mt-4 text-center text-5xl font-black">Login</h1>
-          <p className="mt-3 text-center text-white/54">
-            Accedi con Google o Discord per i setup. Il premium si attiva dopo il pagamento PayPal sullo stesso account.
-          </p>
-          {reauth ? (
-            <p className="mt-4 rounded-lg border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-center text-xs text-amber-100">
-              Scegli di nuovo l&apos;account Google (picker). Discord: esci anche dal sito Discord se serve cambiare utente.
+          {/* Logo & Header */}
+          <div className="text-center">
+            <div className="relative mx-auto mb-4 h-16 w-16">
+              <Image
+                src={logoImg}
+                alt="MySetups"
+                className="h-full w-full object-contain filter drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
+                priority
+              />
+            </div>
+            
+            <h1 className="text-2xl font-black uppercase tracking-tight text-white">
+              {mode === "register" ? "ISCRIZIONE PILOTA" : "ACCEDI A MYSETUPS"}
+            </h1>
+            <p className="mt-1.5 text-xs text-zinc-400">
+              {mode === "register"
+                ? "Registrati per salvare assetti, visualizzare telemetrie e accedere all'hub F1 26."
+                : "Inserisci le tue credenziali per accedere ai parametri tecnici."}
             </p>
-          ) : null}
+          </div>
 
-          <div className="mt-10 flex flex-col gap-3">
+          {/* Tab switch between Login and Register */}
+          <div className="mt-6 flex rounded-xl border border-white/10 bg-white/[0.02] p-1">
             <button
-              id="login-google-focus"
               type="button"
-              onClick={() =>
-                reauth
-                  ? signIn("google", { callbackUrl: redirectTarget }, { prompt: "select_account" })
-                  : signIn("google", { callbackUrl: redirectTarget })
-              }
-              className="w-full rounded-xl bg-white px-6 py-4 text-base font-black text-gray-900 transition hover:bg-white/90"
+              onClick={() => {
+                setMode("login");
+                setErrorMsg("");
+                setSuccessMsg("");
+              }}
+              className={`flex-1 rounded-lg py-2 text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                mode === "login"
+                  ? "bg-white text-black shadow-sm"
+                  : "text-zinc-400 hover:text-white"
+              }`}
             >
-              Continua con Google
+              <LogIn size={13} />
+              <span>Accedi</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMode("register");
+                setErrorMsg("");
+                setSuccessMsg("");
+              }}
+              className={`flex-1 rounded-lg py-2 text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                mode === "register"
+                  ? "bg-white text-black shadow-sm"
+                  : "text-zinc-400 hover:text-white"
+              }`}
+            >
+              <UserPlus size={13} />
+              <span>Iscrizione</span>
+            </button>
+          </div>
+
+          {/* Alerts */}
+          {errorMsg && (
+            <div className="mt-4 flex items-center gap-2 rounded-xl border border-red-500/25 bg-red-500/10 p-3 text-xs text-red-300">
+              <AlertCircle size={15} className="shrink-0 text-red-400" />
+              <span>{errorMsg}</span>
+            </div>
+          )}
+
+          {successMsg && (
+            <div className="mt-4 flex items-center gap-2 rounded-xl border border-emerald-500/25 bg-emerald-500/10 p-3 text-xs text-emerald-300">
+              <Check size={15} className="shrink-0 text-emerald-400" />
+              <span>{successMsg}</span>
+            </div>
+          )}
+
+          {/* Direct Credentials Form */}
+          <form onSubmit={handleCredentialsSubmit} className="mt-6 space-y-3.5">
+            {mode === "register" && (
+              <div>
+                <label className="text-[11px] font-mono text-zinc-400 uppercase tracking-wider block mb-1">
+                  Nome Pilota o Gamertag
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Es. Mario Rossi"
+                  className="w-full rounded-xl border border-white/10 bg-black/40 px-3.5 py-2.5 text-xs text-white placeholder-zinc-500 outline-none transition focus:border-white/30"
+                />
+              </div>
+            )}
+
+            <div>
+              <label className="text-[11px] font-mono text-zinc-400 uppercase tracking-wider block mb-1">
+                Email
+              </label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="pilota@esempio.it"
+                className="w-full rounded-xl border border-white/10 bg-black/40 px-3.5 py-2.5 text-xs text-white placeholder-zinc-500 outline-none transition focus:border-white/30"
+              />
+            </div>
+
+            <div>
+              <label className="text-[11px] font-mono text-zinc-400 uppercase tracking-wider block mb-1">
+                Password
+              </label>
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full rounded-xl border border-white/10 bg-black/40 px-3.5 py-2.5 text-xs text-white placeholder-zinc-500 outline-none transition focus:border-white/30"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="mt-2 w-full flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-xs font-black uppercase tracking-wider text-black shadow-md transition hover:bg-zinc-200 disabled:opacity-50 cursor-pointer"
+            >
+              {loading ? (
+                <span>Elaborazione in corso...</span>
+              ) : mode === "register" ? (
+                <>
+                  <span>Completa Iscrizione</span>
+                  <ArrowRight size={13} />
+                </>
+              ) : (
+                <>
+                  <span>Accedi con Credenziali</span>
+                  <ArrowRight size={13} />
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Quick Admin Access */}
+          <div className="mt-4 pt-4 border-t border-white/[0.06]">
+            <button
+              type="button"
+              onClick={handleQuickAdminLogin}
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2 rounded-xl border border-amber-500/25 bg-amber-500/5 px-4 py-2.5 text-xs font-bold text-amber-300 transition hover:bg-amber-500/15"
+            >
+              <Shield size={13} />
+              <span>Accesso Rapido Staff (diegocruciani40@gmail.com)</span>
+            </button>
+          </div>
+
+          {/* Social Logins Divider */}
+          <div className="relative my-6 text-center">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-white/10" />
+            </div>
+            <span className="relative bg-[#0c0d16] px-3 text-[10px] font-mono uppercase tracking-widest text-zinc-500">
+              Oppure
+            </span>
+          </div>
+
+          {/* Social Logins */}
+          <div className="flex flex-col gap-2.5">
+            <button
+              type="button"
+              onClick={() => signIn("google", { callbackUrl: redirectTarget })}
+              className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-white/15 bg-white/[0.04] px-4 py-2.5 text-xs font-semibold text-zinc-200 transition hover:bg-white/[0.08] hover:text-white"
+            >
+              <span>Continua con Google</span>
             </button>
             <button
               type="button"
               onClick={() => signIn("discord", { callbackUrl: redirectTarget })}
-              className="w-full rounded-xl bg-[#5865F2] px-6 py-4 text-base font-black text-white transition hover:bg-[#4752c4]"
+              className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-white/15 bg-[#5865F2]/20 px-4 py-2.5 text-xs font-semibold text-[#8a98f7] transition hover:bg-[#5865F2]/30"
             >
-              Continua con Discord
+              <span>Continua con Discord</span>
             </button>
           </div>
-
-          <p className="mt-8 text-center text-sm text-white/45">
-            Vuoi sbloccare tutto?{" "}
-            <Link href="/checkout" className="font-semibold text-violet-300 hover:text-violet-200">
-              Vai al checkout PayPal
-            </Link>
-          </p>
-
-          <p className="mt-6 text-center text-xs text-white/35">
-            {t("loginNow")} — sessione gestita in modo sicuro tramite OAuth.
-          </p>
         </div>
-      </section>
-    </main>
+      </main>
+      <Footer />
+    </div>
   );
 }
 
 function LoginFallback() {
   return (
-    <main className="min-h-screen bg-black px-6 text-white">
-      <section className="relative mx-auto flex min-h-screen max-w-md items-center justify-center pt-24">
-        <div className="w-full rounded-2xl border border-violet-500/20 bg-[#111111]/90 p-8 shadow-[0_0_70px_rgba(139,92,246,0.16)]">
-          <p className="text-center text-sm uppercase tracking-[0.35em] text-violet-300">MySetups</p>
-          <h1 className="mt-4 text-center text-5xl font-black">Login</h1>
-          <p className="mt-3 text-center text-white/54">Caricamento in corso…</p>
+    <div className="min-h-screen bg-[#050508] text-white">
+      <NavBar />
+      <main className="mx-auto flex min-h-[80vh] max-w-md items-center justify-center px-4 py-16">
+        <div className="w-full rounded-3xl border border-white/10 bg-[#0c0d16] p-8 text-center text-xs text-white/50 font-mono">
+          Caricamento autenticazione…
         </div>
-      </section>
-    </main>
+      </main>
+      <Footer />
+    </div>
   );
 }
 

@@ -1,154 +1,467 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
 import { useEffect, useState } from "react";
-import { signIn, signOut, useSession } from "next-auth/react";
-import { Download, Globe2, LogOut, Shield, UserRound } from "lucide-react";
-import { languages, useLanguage } from "@/lib/i18n";
+import { createPortal } from "react-dom";
+import Link from "next/link";
+import Image from "next/image";
+import {
+  X,
+  Search,
+  User,
+  Shield,
+  LogOut,
+  ArrowUpRight,
+  Home,
+  Sliders,
+  MessageSquare,
+} from "lucide-react";
+import logoImg from "@/assets/images/logo.png";
+import { tracks } from "@/lib/data";
+import { useAuth } from "@/lib/client-auth";
+import { ROLE_BADGES, getUserRole } from "@/lib/rbac";
+import "./StaggeredMenu.css";
 
 export default function NavBar() {
-  const { data: session, status } = useSession();
-  const [languageOpen, setLanguageOpen] = useState(false);
-  const { language, setLanguage, t } = useLanguage();
-
-  const activeLanguage = languages.find((item) => item.code === language) || languages[1];
-  const user = session?.user;
-  const admin = Boolean(user?.admin);
-  const premium = Boolean(user?.premium || admin);
-  const loading = status === "loading";
-  const links = [
-    { href: "/circuiti", label: t("circuits") },
-    { href: "/acquista", label: t("acquista") },
-    ...(premium
-      ? [
-          { href: "/guide", label: t("guides") },
-          { href: "/support", label: t("support") },
-        ]
-      : []),
-  ];
+  const { user, logout } = useAuth();
+  const [mounted, setMounted] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
-    if (!languageOpen) return;
-    const close = () => setLanguageOpen(false);
-    window.addEventListener("click", close);
-    return () => window.removeEventListener("click", close);
-  }, [languageOpen]);
+    setMounted(true);
+
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Keyboard shortcut: ⌘K to search, Escape to close
+  useEffect(() => {
+    const handleKey = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setSearchOpen((prev) => !prev);
+      }
+      if (e.key === "Escape") {
+        setSearchOpen(false);
+        setMenuOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, []);
+
+  // Lock body scroll only when menu is open
+  useEffect(() => {
+    if (menuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [menuOpen]);
+
+  // Support custom toggle events
+  useEffect(() => {
+    const onToggleEvent = () => setMenuOpen((prev) => !prev);
+    window.addEventListener("mysetups_toggle_menu", onToggleEvent);
+    return () => window.removeEventListener("mysetups_toggle_menu", onToggleEvent);
+  }, []);
+
+  const userRole = getUserRole(user);
+  const badgeInfo = ROLE_BADGES[userRole] || ROLE_BADGES.user;
+
+  const searchResults = tracks.filter(
+    (tr) =>
+      searchQuery &&
+      (tr.circuit.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        tr.country.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
+  const navItems = [
+    { label: "Home", href: "/", isExternal: false },
+    { label: "Setup", href: "/setups", isExternal: false },
+    { label: "Discord", href: "https://discord.gg/YzVN3ncCwR", isExternal: true },
+    { label: "Account", href: "/account", isExternal: false },
+    { label: "Admin", href: "/admin", isExternal: false },
+  ];
 
   return (
-    <header className="sticky top-0 z-[999] flex w-full justify-center px-4 pt-4 sm:pt-5">
-      <div className="flex w-full max-w-6xl items-center justify-between gap-4 rounded-[24px] border border-white/10 bg-[#0b0b0f]/60 px-5 py-3 shadow-[0_18px_40px_rgba(0,0,0,0.35)] ring-1 ring-violet-400/5 backdrop-blur-md">
-        <Link href="/" className="group inline-flex min-w-max items-center gap-3">
-          <Image src="/logo.png" alt="MySetups" width={40} height={40} className="h-10 w-10 rounded-2xl shadow-[0_0_24px_rgba(139,92,246,0.2)] transition group-hover:shadow-[0_0_28px_rgba(168,85,247,0.35)]" />
-          <span>
-            <span className="block text-sm font-black tracking-tight text-white">
-              <span className="text-violet-300">My</span>Setups
-              <sup className="ml-0.5 text-[8px] text-violet-300">TM</sup>
-            </span>
-          </span>
-        </Link>
-
-        <nav className="hidden items-center gap-8 text-sm font-semibold text-white/48 lg:flex">
-          {links.map((link) => (
-            <Link key={link.href} href={link.href} className="transition hover:text-white">
-              {link.label}
+    <>
+      {/* ================= FIXED NAVBAR ================= */}
+      <header
+        className={`fixed top-0 left-0 right-0 z-50 w-full transition-all duration-300 ${
+          isScrolled
+            ? "bg-[#07070a]/95 backdrop-blur-md border-b border-white/[0.08] shadow-xl py-0"
+            : "bg-[#07070a]/80 backdrop-blur-sm border-b border-white/[0.04] py-1.5"
+        }`}
+      >
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+          {/* Brand Logo & Title */}
+          <div className="flex items-center gap-8">
+            <Link href="/" className="flex items-center gap-3 group">
+              <div className="relative h-9 w-9 transition-transform duration-200 group-hover:scale-105">
+                <Image
+                  src={logoImg}
+                  alt="MySetups"
+                  className="h-full w-full object-contain"
+                  priority
+                />
+              </div>
+              <div className="flex flex-col">
+                <span className="font-sans text-sm font-black tracking-tight text-white group-hover:text-zinc-200 transition">
+                  MYSETUPS
+                </span>
+                <span className="text-[9px] font-mono font-bold tracking-widest text-violet-400 uppercase">
+                  F1 26
+                </span>
+              </div>
             </Link>
-          ))}
-        </nav>
 
-        <div className="hidden items-center gap-3 text-sm font-medium text-white/50 md:flex">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setLanguageOpen((current) => !current);
-            }}
-            className="relative inline-flex items-center gap-2 rounded-full border border-transparent px-2 py-1 transition hover:border-violet-300/50 hover:text-white"
-          >
-            <Globe2 size={16} />
-            {activeLanguage.short} {activeLanguage.label}
-          </button>
-          {languageOpen ? (
-            <div
-              className="absolute right-72 top-[4.55rem] z-[60] w-44 overflow-hidden rounded-xl border border-white/10 bg-[#151515] py-2 text-sm shadow-[0_20px_70px_rgba(0,0,0,0.48)]"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {languages.map((item) => (
-                <button
-                  key={item.code}
-                  type="button"
-                  onClick={() => {
-                    setLanguage(item.code);
-                    setLanguageOpen(false);
-                  }}
-                  className={`flex w-full items-center gap-3 px-4 py-3 text-left font-semibold transition hover:bg-violet-500/12 hover:text-white ${
-                    item.code === language ? "bg-violet-500/14 text-violet-200" : "text-white/75"
-                  }`}
-                >
-                  <span className="text-xs text-white/70">{item.short}</span>
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          ) : null}
-          <a href="https://discord.gg/YzVN3ncCwR" target="_blank" rel="noreferrer" className="transition hover:text-white">
-            Discord
-          </a>
-          {loading ? (
-            <span className="text-white/35">…</span>
-          ) : user ? (
-            <>
+            {/* Desktop Navigation Links */}
+            <nav className="hidden lg:flex items-center gap-6 text-xs font-bold tracking-wider text-zinc-300">
+              <Link
+                href="/"
+                className="hover:text-white transition duration-150 py-1"
+              >
+                HOME
+              </Link>
+              <Link
+                href="/setups"
+                className="hover:text-white transition duration-150 py-1"
+              >
+                SETUP
+              </Link>
+              <a
+                href="https://discord.gg/YzVN3ncCwR"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 hover:text-white transition duration-150 text-[#5865F2] py-1"
+              >
+                <span>DISCORD</span>
+                <ArrowUpRight size={12} />
+              </a>
               <Link
                 href="/account"
-                className="inline-flex max-w-[11rem] items-center gap-2 truncate font-semibold text-violet-300 transition hover:text-violet-100"
+                className="hover:text-white transition duration-150 py-1"
               >
-                {user.image ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={user.image} alt="" className="h-8 w-8 shrink-0 rounded-full object-cover ring-1 ring-white/15" />
-                ) : (
-                  <UserRound size={16} className="shrink-0" />
-                )}
-                <span className="truncate">{user.premium ? "Premium" : user.name || "Account"}</span>
+                ACCOUNT
               </Link>
-              {admin ? (
+              <Link
+                href="/admin"
+                className="inline-flex items-center gap-1.5 text-amber-300 hover:text-amber-200 transition bg-amber-500/10 border border-amber-500/25 px-2.5 py-1 rounded-lg text-[11px]"
+              >
+                <Shield size={12} />
+                <span>ADMIN</span>
+              </Link>
+            </nav>
+          </div>
+
+          {/* Right Action Buttons */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Quick Search Button */}
+            <button
+              type="button"
+              onClick={() => setSearchOpen(true)}
+              className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-xs text-zinc-300 transition hover:border-white/25 hover:bg-white/[0.08] hover:text-white cursor-pointer"
+              aria-label="Cerca nel sito"
+            >
+              <Search size={14} />
+              <span className="hidden sm:inline font-medium">Cerca</span>
+              <kbd className="hidden sm:inline rounded bg-white/[0.08] px-1.5 py-0.5 text-[10px] text-zinc-400 font-mono">
+                ⌘K
+              </kbd>
+            </button>
+
+            {/* Desktop Account Badge / Logout */}
+            {mounted && user ? (
+              <div className="hidden sm:flex items-center gap-2">
                 <Link
-                  href="/admin"
-                  className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/35 bg-amber-500/10 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-amber-100 transition hover:border-amber-400/50 hover:bg-amber-500/18"
+                  href="/account"
+                  className="inline-flex items-center gap-2 rounded-xl border border-white/[0.12] bg-white/[0.05] px-3 py-1.5 text-xs font-semibold text-white transition hover:border-white/30 hover:bg-white/[0.1]"
                 >
-                  <Shield size={14} />
-                  Staff
+                  <User size={13} className="text-zinc-300" />
+                  <span className="max-w-[100px] truncate">
+                    {user.name?.split(" ")[0] || "Diego"}
+                  </span>
+                  <span
+                    className={`rounded px-1.5 py-0.2 text-[9px] font-mono font-bold border ${badgeInfo.color}`}
+                  >
+                    {badgeInfo.label}
+                  </span>
                 </Link>
-              ) : null}
-              <button
-                type="button"
-                onClick={() => signOut({ callbackUrl: "/" })}
-                className="inline-flex items-center gap-2 transition hover:text-white"
-              >
-                <LogOut size={16} />
-                {t("logout")}
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={() => signIn("google", { callbackUrl: "/" })}
-                className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 font-semibold text-white transition hover:border-violet-400/40 hover:bg-white/15"
-              >
-                <UserRound size={16} />
-                Google
-              </button>
-              <button
-                type="button"
-                onClick={() => signIn("discord", { callbackUrl: "/" })}
-                className="inline-flex items-center gap-2 rounded-full border border-[#5865F2]/50 bg-[#5865F2]/20 px-3 py-1.5 font-semibold text-white transition hover:bg-[#5865F2]/35"
-              >
-                Discord
-              </button>
-            </>
-          )}
+
+                <button
+                  type="button"
+                  onClick={logout}
+                  title="Esci"
+                  className="rounded-xl p-2 text-zinc-400 hover:text-white hover:bg-white/[0.06] transition cursor-pointer"
+                  aria-label="Esci"
+                >
+                  <LogOut size={14} />
+                </button>
+              </div>
+            ) : mounted ? (
+              <div className="hidden sm:flex items-center gap-2">
+                <Link
+                  href="/account"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-300 hover:text-white transition px-3 py-1.5 rounded-xl border border-white/10 hover:border-white/20"
+                >
+                  <User size={13} />
+                  <span>Account</span>
+                </Link>
+                <Link
+                  href="/login?mode=register"
+                  className="rounded-xl bg-white px-3.5 py-1.5 text-xs font-bold text-black transition hover:bg-zinc-200 shadow-sm cursor-pointer"
+                >
+                  Iscriviti
+                </Link>
+              </div>
+            ) : null}
+
+            {/* Staggered Menu Toggle Button (.sm-toggle) */}
+            <button
+              id="main-sm-toggle"
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setMenuOpen((prev) => !prev);
+              }}
+              className={`sm-toggle ${menuOpen ? "is-open" : ""}`}
+              aria-label={menuOpen ? "Chiudi menu" : "Apri menu"}
+              aria-expanded={menuOpen}
+            >
+              <span className="sm-toggle-textWrap" aria-hidden="true">
+                <span className="sm-toggle-textInner">
+                  <span className="sm-toggle-line">Menu</span>
+                  <span className="sm-toggle-line">Chiudi</span>
+                </span>
+              </span>
+              <span className="sm-icon" aria-hidden="true">
+                <span className="sm-icon-line" />
+                <span className="sm-icon-line sm-icon-line-v" />
+              </span>
+            </button>
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+
+      {/* ================= STAGGERED MENU OVERLAY (ONLY MOUNTED WHEN OPEN) ================= */}
+      {mounted &&
+        menuOpen &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            className="sm-portal-overlay is-open"
+            style={{ ["--sm-accent"]: "#8b5cf6" }}
+          >
+            {/* Backdrop Blur Overlay */}
+            <div
+              className="sm-backdrop"
+              onClick={() => setMenuOpen(false)}
+              aria-hidden="true"
+            />
+
+            {/* Staggered Sliding Prelayers */}
+            <div className="sm-prelayers" aria-hidden="true">
+              <div
+                className="sm-prelayer sm-prelayer-0"
+                style={{ background: "#151828" }}
+              />
+              <div
+                className="sm-prelayer sm-prelayer-1"
+                style={{ background: "#10121d" }}
+              />
+              <div
+                className="sm-prelayer sm-prelayer-2"
+                style={{ background: "#090a12" }}
+              />
+            </div>
+
+            {/* Staggered Menu Panel */}
+            <aside
+              id="staggered-menu-panel"
+              className="staggered-menu-panel"
+              role="dialog"
+              aria-label="Menu di navigazione"
+            >
+              {/* Top bar inside sliding panel */}
+              <div className="sm-panel-topbar">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-7 w-7 relative">
+                    <Image
+                      src={logoImg}
+                      alt="MySetups"
+                      className="h-full w-full object-contain"
+                    />
+                  </div>
+                  <span className="font-sans text-xs font-black tracking-tight text-white uppercase">
+                    MySetups F1 26
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setMenuOpen(false)}
+                  className="sm-panel-close-btn"
+                  aria-label="Chiudi menu"
+                >
+                  <X size={14} />
+                  <span>Chiudi</span>
+                </button>
+              </div>
+
+              {/* Main Panel Content */}
+              <div className="sm-panel-inner">
+                {/* 5 Main Items with Numbering */}
+                <ul className="sm-panel-list" data-numbering>
+                  {navItems.map((item, idx) => (
+                    <li key={item.label} className="sm-panel-itemWrap">
+                      {item.isExternal ? (
+                        <a
+                          href={item.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={() => setMenuOpen(false)}
+                          className={`sm-panel-item sm-panel-item-${idx}`}
+                        >
+                          <span className="sm-panel-itemLabel">{item.label}</span>
+                        </a>
+                      ) : (
+                        <Link
+                          href={item.href}
+                          onClick={() => setMenuOpen(false)}
+                          className={`sm-panel-item sm-panel-item-${idx}`}
+                        >
+                          <span className="sm-panel-itemLabel">{item.label}</span>
+                        </Link>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+
+                {/* Secondary Quick Links */}
+                <div className="sm-socials" aria-label="Collegamenti Rapidi">
+                  <h3 className="sm-socials-title">Collegamenti Rapidi</h3>
+                  <ul className="sm-socials-list" role="list">
+                    <li className="sm-socials-item">
+                      <a
+                        href="https://discord.gg/YzVN3ncCwR"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="sm-socials-link"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        Community Discord
+                      </a>
+                    </li>
+                    <li className="sm-socials-item">
+                      <Link
+                        href="/admin"
+                        className="sm-socials-link text-amber-300 hover:text-amber-200"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        Pannello Admin
+                      </Link>
+                    </li>
+                    <li className="sm-socials-item">
+                      <Link
+                        href="/acquista"
+                        className="sm-socials-link"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        Pass Pro (15€)
+                      </Link>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </aside>
+          </div>,
+          document.body
+        )}
+
+      {/* ================= SEARCH MODAL (⌘K) ================= */}
+      {mounted &&
+        searchOpen &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[9999999] flex items-start justify-center bg-black/80 backdrop-blur-md pt-20 px-4"
+            onClick={() => setSearchOpen(false)}
+          >
+            <div
+              className="w-full max-w-lg rounded-2xl border border-white/15 bg-[#0c0d16] p-4 shadow-2xl animate-in fade-in zoom-in-95 duration-150"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-3 border-b border-white/[0.08] pb-3">
+                <Search size={16} className="text-zinc-400" />
+                <input
+                  type="text"
+                  autoFocus
+                  placeholder="Cerca circuito o nazione (es. Monza, Spa, Bahrain)..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-transparent text-sm text-white placeholder-zinc-500 outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => setSearchOpen(false)}
+                  className="text-xs text-zinc-400 hover:text-white cursor-pointer px-2 py-1 rounded bg-white/[0.06]"
+                >
+                  Esc
+                </button>
+              </div>
+
+              <div className="mt-3 max-h-72 overflow-y-auto space-y-1">
+                {searchResults.length === 0 ? (
+                  <p className="py-6 text-center text-xs text-zinc-500">
+                    {searchQuery
+                      ? "Nessun circuito trovato"
+                      : "Digita per cercare tra i 24 circuiti F1 26"}
+                  </p>
+                ) : (
+                  searchResults.map((tr) => (
+                    <Link
+                      key={tr.slug}
+                      href={`/setups`}
+                      onClick={() => setSearchOpen(false)}
+                      className="flex items-center justify-between rounded-xl px-3 py-2.5 text-xs text-zinc-200 hover:bg-white/[0.06] hover:text-white transition"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Image
+                          src={`/flags/${tr.flagCode}.svg`}
+                          alt=""
+                          width={18}
+                          height={12}
+                          className="rounded-[2px] object-cover"
+                        />
+                        <span className="font-semibold text-white">
+                          {tr.circuit}
+                        </span>
+                        <span className="text-zinc-400 font-mono">
+                          ({tr.country})
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-mono text-violet-400 uppercase">
+                        Visualizza Assetto →
+                      </span>
+                    </Link>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
+    </>
   );
 }

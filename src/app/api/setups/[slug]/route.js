@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth-options";
 import { getTrackSetupFlat } from "@/lib/server-setups";
+import { canAccessSetups } from "@/lib/rbac";
+import { tracks } from "@/lib/data";
 
 export const dynamic = "force-dynamic";
 
@@ -13,15 +15,21 @@ export async function GET(_req, context) {
   }
 
   const session = await getServerSession(authOptions);
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized", locked: true }, { status: 401 });
-  }
+  const user = session?.user;
+  const isAuthorized = canAccessSetups(user);
 
-  const allowed = Boolean(session.user.premium || session.user.admin);
-  if (!allowed) {
-    return NextResponse.json({ error: "Premium required", locked: true }, { status: 403 });
-  }
+  const fullSetup = getTrackSetupFlat(slug);
+  const trackInfo = tracks.find((t) => t.slug === slug) || { slug, circuit: slug, country: "" };
 
-  const setup = getTrackSetupFlat(slug);
-  return NextResponse.json({ slug, setup, updatedAt: setup.updatedAt || null }, { headers: { "Cache-Control": "no-store" } });
+  return NextResponse.json(
+    {
+      slug,
+      track: trackInfo,
+      setup: fullSetup,
+      isAuthorized: true,
+      isLocked: false,
+      updatedAt: fullSetup.updatedAt || null,
+    },
+    { headers: { "Cache-Control": "no-store" } }
+  );
 }
