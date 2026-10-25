@@ -3,8 +3,6 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
-  BookOpen,
-  Headphones,
   Map,
   Plus,
   Settings,
@@ -24,8 +22,6 @@ const tabs = [
   { id: "setups", label: "Modifica Setup", icon: Settings },
   { id: "users", label: "Utenti Iscritti", icon: UserRound },
   { id: "tracks", label: "Circuiti", icon: Map },
-  { id: "tickets", label: "Ticket", icon: Headphones },
-  { id: "guides", label: "Guide", icon: BookOpen },
 ];
 
 export default function AdminPage() {

@@ -63,9 +63,124 @@
     linear-gradient(145deg, var(--color-surface-raised), var(--color-surface) 55%, #07070a);
 }
 
+.signup-link {
+  --signup-color: #d4d4d8;
+  --signup-hover-color: #a78bfa;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem;
+  color: var(--signup-color);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: color 0.2s ease;
+}
+
+.signup-link::after {
+  position: absolute;
+  right: 0.25rem;
+  bottom: -0.2rem;
+  left: 0.25rem;
+  height: 2px;
+  background: var(--signup-hover-color);
+  content: "";
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease-out;
+}
+
+.signup-link > svg {
+  color: currentColor;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.signup-link:hover,
+.signup-link:focus-visible {
+  color: var(--signup-hover-color);
+}
+
+.signup-link:hover::after,
+.signup-link:focus-visible::after {
+  transform: scaleX(1);
+}
+
+.signup-link:hover > svg,
+.signup-link:focus-visible > svg {
+  transform: translateX(4px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .signup-link,
+  .signup-link::after,
+  .signup-link > svg {
+    transition: none;
+  }
+}
+
 /* Subtle carbon grid for sim racing depth */
 .sim-grid-subtle {
   background-image: linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
                     linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
   background-size: 40px 40px;
+}
+
+.home-explore-button {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  transition: box-shadow 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+.home-explore-button::after {
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  right: 0;
+  width: 0;
+  height: 100%;
+  background: #8b5cf6;
+  content: "";
+  transition: width 0.4s ease-in-out;
+}
+
+.home-explore-button:hover::after {
+  right: auto;
+  left: 0;
+  width: 100%;
+}
+
+.home-explore-button > span,
+.home-explore-button > svg {
+  transition: color 0.3s ease-in-out;
+}
+
+.home-explore-button:hover > span,
+.home-explore-button:hover > svg {
+  color: #31245f;
+}
+
+.home-explore-button:hover > span {
+  animation: explore-button-scale 0.3s ease-in-out;
+}
+
+@keyframes explore-button-scale {
+  50% {
+    transform: scale(0.95);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-explore-button,
+  .home-explore-button::after,
+  .home-explore-button > span,
+  .home-explore-button > svg {
+    transition: none;
+  }
+
+  .home-explore-button:hover > span {
+    animation: none;
+  }
 }

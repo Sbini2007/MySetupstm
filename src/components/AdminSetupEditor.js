@@ -18,15 +18,15 @@ export default function AdminSetupEditor() {
   const [errorMsg, setErrorMsg] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const load = () => {
-    safeFetchJson("/api/admin/setups", { cache: "no-store" })
-      .then((data) => {
-        setAll(data?.setups || {});
-        setDefaults(data?.defaults || {});
-      })
-      .catch(() => {
-        setErrorMsg("Impossibile caricare i setup.");
-      });
+  const load = async () => {
+    const data = await safeFetchJson("/api/admin/setups", { cache: "no-store" });
+    if (!data?.setups || !data?.defaults) {
+      setErrorMsg("Impossibile caricare i setup. Controlla la connessione e riprova.");
+      return;
+    }
+    setAll(data.setups);
+    setDefaults(data.defaults);
+    setErrorMsg("");
   };
 
   useEffect(() => {

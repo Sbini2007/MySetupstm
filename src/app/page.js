@@ -13,6 +13,7 @@ import NavBar from "@/components/NavBar";
 import Footer from "@/components/Footer";
 import TextType from "@/components/TextType";
 import { safeFetchJson } from "@/lib/safe-json";
+import { formatRelativeTime } from "@/lib/relative-time";
 import { detailedReviews } from "@/lib/reviews";
 
 export default function HomePage() {
@@ -44,17 +45,8 @@ export default function HomePage() {
   }, []);
 
   const formattedUpdateDate = useMemo(() => {
-    if (!latestUpdate?.updatedAt) return "Stagione F1 26";
-    try {
-      const d = new Date(latestUpdate.updatedAt);
-      return d.toLocaleDateString("it-IT", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      });
-    } catch {
-      return "Recente";
-    }
+    const relativeTime = formatRelativeTime(latestUpdate?.updatedAt);
+    return relativeTime ? `Ultimo aggiornamento ${relativeTime}` : "Ultimo aggiornamento recente";
   }, [latestUpdate]);
 
   return (
@@ -89,7 +81,7 @@ export default function HomePage() {
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
               <Link
                 href="/setups"
-                className="inline-flex items-center gap-2 rounded-xl border border-violet-300/20 bg-[#5a45b5] px-6 py-3 text-xs font-bold text-white shadow-md shadow-black/20 transition-colors duration-200 hover:bg-[#6750c7] active:bg-[#4c3aa0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090a12] sm:text-sm"
+                className="home-explore-button inline-flex items-center gap-2 rounded-none border border-violet-300/40 bg-[#a78bfa] px-6 py-3 text-xs font-bold text-white shadow-md shadow-black/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090a12] sm:text-sm"
               >
                 <span>Esplora i Setup</span>
                 <ArrowRight size={14} />
@@ -101,10 +93,10 @@ export default function HomePage() {
         {/* ================= SEZIONE DINAMICA "ULTIMO AGGIORNAMENTO" ================= */}
         {latestUpdate && (
           <section className="mx-auto max-w-6xl px-4 pb-8 sm:px-6 lg:px-8">
-            <div className="rounded-2xl border border-violet-400/[0.14] bg-gradient-to-br from-[#151226]/90 via-[#0c0d15]/90 to-[#0c0d15]/80 backdrop-blur-md p-5 sm:p-6 shadow-xl shadow-violet-950/10 relative overflow-hidden transition duration-200 hover:border-violet-400/25">
-              <div className="flex items-start gap-4">
-                {/* Flag */}
-                <div className="relative h-12 w-16 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-black/40">
+            <div className="relative py-5 sm:py-6">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 items-center gap-4">
+                  <div className="relative h-12 w-16 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-black/40">
                   <Image
                     src={`/flags/${latestUpdate.flagCode}.svg`}
                     alt=""
@@ -114,18 +106,24 @@ export default function HomePage() {
                   />
                 </div>
 
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-mono text-xs text-zinc-400">
-                      {formattedUpdateDate}
-                    </span>
+                  <div className="min-w-0">
+                    <h3 className="truncate text-lg font-bold text-white sm:text-xl">
+                      {latestUpdate.circuit}
+                    </h3>
+                    <p className="mt-1 text-xs font-medium text-zinc-400">
+                      {latestUpdate.country}
+                    </p>
                   </div>
-
-                  <h3 className="text-lg sm:text-xl font-bold text-white mt-1">
-                    {latestUpdate.circuit} ({latestUpdate.country})
-                  </h3>
                 </div>
+
+                <span className="w-fit shrink-0 text-xs font-medium text-zinc-400">
+                  {formattedUpdateDate}
+                </span>
               </div>
+              <div
+                aria-hidden="true"
+                className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-violet-400 to-transparent shadow-[0_0_3px_rgba(167,139,250,0.55)]"
+              />
             </div>
           </section>
         )}
@@ -177,7 +175,7 @@ export default function HomePage() {
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
               <div className="max-w-xl">
                 <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
-                  Entra nel Discord Ufficiale di F1 26
+                  Entra nel Discord di MySetups
                 </h2>
 
                 <p className="mt-3 text-xs sm:text-sm text-zinc-400 leading-relaxed">

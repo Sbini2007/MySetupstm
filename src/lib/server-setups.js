@@ -3,9 +3,13 @@ import path from "path";
 import { setups as legacySetups, tracks } from "@/lib/data";
 import { emptyFlatSetupForSlug, mergeLegacySetup } from "@/lib/setup-keys";
 import { generateFlatSetup } from "@/lib/default-setups";
-import { clampValue } from "@/lib/setup-sections";
+import { clampValue, SETUP_SECTIONS } from "@/lib/setup-sections";
 
 const FILE = path.join(process.cwd(), "data", "track-setups.json");
+const SETUP_PREFIXES = ["race", "quali", "parc_ferme"];
+const NUMERIC_SETUP_FIELDS = SETUP_SECTIONS.flatMap((section) =>
+  section.fields.map((field) => field.suffix)
+);
 
 function readFile() {
   try {
@@ -34,6 +38,30 @@ function attachUpdatedAt(setup, fallbackDate = new Date().toISOString()) {
   return next;
 }
 
+function mergeSetupWithDefaults(slug, setup) {
+  const defaults = generateFlatSetup(slug);
+  const merged = { ...defaults, ...(setup || {}) };
+
+  for (const prefix of SETUP_PREFIXES) {
+    for (const suffix of NUMERIC_SETUP_FIELDS) {
+      const key = `${prefix}_${suffix}`;
+      const value = merged[key];
+      const numericValue =
+        typeof value === "number"
+          ? value
+          : typeof value === "string" && value.trim()
+            ? Number(value)
+            : Number.NaN;
+
+      merged[key] = Number.isFinite(numericValue)
+        ? clampValue(suffix, numericValue)
+        : defaults[key];
+    }
+  }
+
+  return attachUpdatedAt(merged);
+}
+
 function seedFromLegacy() {
   const out = {};
   for (const t of tracks) {
@@ -60,9 +88,9 @@ export function getAllTrackSetups() {
       if (legacySetups[t.slug]) {
         Object.assign(generated, mergeLegacySetup(legacySetups[t.slug]));
       }
-      data[t.slug] = attachUpdatedAt(generated);
+      data[t.slug] = mergeSetupWithDefaults(t.slug, generated);
     } else {
-      data[t.slug] = attachUpdatedAt(data[t.slug]);
+      data[t.slug] = mergeSetupWithDefaults(t.slug, data[t.slug]);
     }
   }
 
@@ -83,7 +111,7 @@ export function saveTrackSetupFlat(slug, flat) {
 
   // Enforce parameter boundaries across all variations (race, quali, parc_ferme)
   for (const [key, value] of Object.entries(nextData)) {
-    for (const prefix of ["race_", "quali_", "parc_ferme_"]) {
+    for (const prefix of SETUP_PREFIXES.map((variation) => `${variation}_`)) {
       if (key.startsWith(prefix)) {
         const suffix = key.slice(prefix.length);
         if (typeof value === "number") {
@@ -96,7 +124,10 @@ export function saveTrackSetupFlat(slug, flat) {
   if (flat.latest_variation) {
     nextData.latest_variation = flat.latest_variation;
   }
-  all[slug] = attachUpdatedAt({ ...nextData, updatedAt: new Date().toISOString() });
+  all[slug] = mergeSetupWithDefaults(slug, {
+    ...nextData,
+    updatedAt: new Date().toISOString(),
+  });
   writeFile(all);
   return all[slug];
 }
@@ -121,7 +152,7 @@ export function duplicateTrackSetup(sourceSlug, targetSlug, variantFrom = null, 
     target.latest_variation = `Duplicato interamente da ${sourceSlug}`;
   }
 
-  all[targetSlug] = attachUpdatedAt(target);
+  all[targetSlug] = mergeSetupWithDefaults(targetSlug, target);
   writeFile(all);
   return all[targetSlug];
 }
@@ -140,7 +171,7 @@ export function deleteTrackSetup(slug) {
 export function createTrackSetup(slug, customData = {}) {
   const all = getAllTrackSetups();
   const base = generateFlatSetup(slug);
-  all[slug] = attachUpdatedAt({ ...base, ...customData });
+  all[slug] = mergeSetupWithDefaults(slug, { ...base, ...customData });
   writeFile(all);
   return all[slug];
 }

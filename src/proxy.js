@@ -13,6 +13,7 @@ export async function proxy(request) {
     pathname.startsWith("/api/paypal") ||
     pathname.startsWith("/api/") ||
     pathname === "/login" ||
+    pathname === "/register" ||
     pathname === "/acquista" ||
     pathname === "/checkout" ||
     pathname === "/pricing" ||

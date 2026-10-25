@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import NavBar from "@/components/NavBar";
 import Footer from "@/components/Footer";
@@ -12,6 +12,7 @@ import { safeFetchJson } from "@/lib/safe-json";
 
 export default function SetupsPage() {
   const pathname = usePathname();
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [selectedSlug, setSelectedSlug] = useState(null);
   const [setupsBySlug, setSetupsBySlug] = useState({});
@@ -71,6 +72,14 @@ export default function SetupsPage() {
     () => tracks.find((track) => track.slug === selectedSlug) || null,
     [selectedSlug]
   );
+
+  const handleTrackSelect = useCallback((item) => {
+    if (window.matchMedia("(max-width: 1023px), (pointer: coarse)").matches) {
+      router.push(`/track/${item.slug}`);
+      return;
+    }
+    setSelectedSlug(item.slug);
+  }, [router]);
 
   // Clean items formatted for AnimatedList
   const animatedItems = useMemo(() => {
@@ -137,9 +146,7 @@ export default function SetupsPage() {
                 items={animatedItems}
                 selectedId={selectedSlug}
                 initialSelectedIndex={-1}
-                onItemSelect={(item) => {
-                  setSelectedSlug(item.slug);
-                }}
+                onItemSelect={handleTrackSelect}
                 theme="dark"
                 width="100%"
                 maxHeight={620}
@@ -163,9 +170,13 @@ export default function SetupsPage() {
                   track={selectedTrack}
                 />
               ) : (
-                <div className="flex min-h-40 items-center justify-center border-y border-white/10 px-4 text-center">
-                  <p className="text-xs font-mono text-zinc-400">
-                    Seleziona un circuito dalla lista per visualizzare il setup.
+                <div className="flex min-h-48 flex-col items-center justify-center px-5 py-10 text-center lg:min-h-[620px]">
+                  <div className="grid h-11 w-11 place-items-center rounded-full bg-violet-400/10 text-violet-300">
+                    <Search size={18} aria-hidden="true" />
+                  </div>
+                  <h2 className="mt-4 text-base font-semibold text-white">Scegli un circuito</h2>
+                  <p className="mt-2 max-w-sm text-sm leading-relaxed text-zinc-400">
+                    Seleziona una pista per vedere il setup completo.
                   </p>
                 </div>
               )}

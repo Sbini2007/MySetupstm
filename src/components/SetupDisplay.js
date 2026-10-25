@@ -5,6 +5,7 @@ import Image from "next/image";
 import { ArrowLeft, Lock } from "lucide-react";
 import { PARAM_LIMITS, SETUP_TABS, tabToPrefix } from "@/lib/setup-sections";
 import { tracks } from "@/lib/data";
+import { formatRelativeTime } from "@/lib/relative-time";
 
 export default function SetupDisplay({
   setup,
@@ -32,13 +33,18 @@ export default function SetupDisplay({
     const index = tracks.findIndex((item) => item.slug === currentTrack.slug);
     return index >= 0 ? index + 1 : 1;
   }, [currentTrack]);
+  const relativeUpdate = formatRelativeTime(setup?.updatedAt);
 
   if (isAuthorized === false) {
     return (
-      <div className="border-y border-white/10 py-8 text-center">
-        <Lock size={20} className="mx-auto text-zinc-500" />
-        <h2 className="mt-3 text-sm font-bold uppercase tracking-wide text-white">Accesso riservato</h2>
-        <p className="mt-1 text-xs text-zinc-400">Contatta lo staff per richiedere l'accesso a questi setup.</p>
+      <div className="flex min-h-48 flex-col items-center justify-center px-5 py-10 text-center lg:min-h-[620px]">
+        <div className="grid h-11 w-11 place-items-center rounded-full bg-violet-400/10 text-violet-300">
+          <Lock size={19} aria-hidden="true" />
+        </div>
+        <h2 className="mt-4 text-base font-semibold text-white">Sblocca questo setup</h2>
+        <p className="mt-2 max-w-sm text-sm leading-relaxed text-zinc-400">
+          Questo assetto è riservato ai clienti MySetups. Acquista i setup entrando nel nostro Discord e contatta il nostro staff.
+        </p>
       </div>
     );
   }
@@ -134,7 +140,7 @@ export default function SetupDisplay({
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-1">
         <div className="flex items-center gap-3">
           {onBack && (
             <button
@@ -155,16 +161,24 @@ export default function SetupDisplay({
               className="h-7 w-10 rounded-sm object-cover"
             />
           )}
-          <div>
+          <div className="min-w-0">
             <p className="text-[10px] font-mono uppercase tracking-wider text-zinc-400">
               Round {String(trackIndex).padStart(2, "0")} · {currentTrack.country}
             </p>
-            <h2 className="text-lg font-black tracking-tight text-white">{currentTrack.circuit}</h2>
+            <h2 className="truncate text-lg font-black tracking-tight text-white">{currentTrack.circuit}</h2>
+            {relativeUpdate && (
+              <p
+                className="mt-1 text-[10px] text-zinc-500"
+                title={new Date(setup.updatedAt).toLocaleString("it-IT")}
+              >
+                Ultimo aggiornamento {relativeUpdate}
+              </p>
+            )}
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-3 border-y border-white/10">
+      <div className="grid grid-cols-3 gap-1 rounded-xl border border-white/[0.08] bg-[#0c0d14] p-1">
         {SETUP_TABS.map((tab) => {
           const active = activeTab === tab.key;
           return (
@@ -172,10 +186,10 @@ export default function SetupDisplay({
               key={tab.key}
               type="button"
               onClick={() => setActiveTab(tab.key)}
-              className={`py-2.5 text-xs font-bold transition ${
+              className={`rounded-lg py-3 text-xs font-bold transition-colors ${
                 active
-                  ? "border-b-2 border-violet-400 text-violet-300"
-                  : "text-zinc-500 hover:text-white"
+                  ? "bg-violet-400/15 text-violet-200 shadow-sm ring-1 ring-inset ring-violet-300/20"
+                  : "text-zinc-500 hover:bg-white/[0.04] hover:text-white"
               }`}
             >
               {tab.label}
@@ -184,13 +198,13 @@ export default function SetupDisplay({
         })}
       </div>
 
-      <div className="divide-y divide-white/10 border-y border-white/10">
+      <div className="grid grid-cols-1 gap-3">
         {parameterSections.map((section) => (
-          <section key={section.title} className="py-4">
-            <h3 className="pb-3 text-xs font-bold uppercase tracking-wider text-violet-300">
+          <section key={section.title} className="rounded-2xl border border-white/[0.08] bg-[#0c0d14] p-4 sm:p-5">
+            <h3 className="mb-4 border-b border-white/[0.08] pb-3 text-xs font-bold uppercase tracking-wider text-violet-300">
               {section.title}
             </h3>
-            <dl className="space-y-3">
+            <dl className="space-y-2">
               {section.rows.map(({ label, key, value: rowValue, unit = "" }) => {
                 const bounds = PARAM_LIMITS[key];
                 const numericValue = Number(rowValue);
@@ -200,10 +214,10 @@ export default function SetupDisplay({
                     : 0;
 
                 return (
-                  <div key={key} className="space-y-1.5">
-                    <div className="flex items-baseline justify-between gap-4">
-                      <dt className="text-xs text-zinc-300">{label}</dt>
-                      <dd className="font-mono text-xs font-semibold tabular-nums text-white">
+                  <div key={key} className="rounded-lg border border-white/[0.04] bg-white/[0.025] px-3 py-2.5">
+                    <div className="flex items-center justify-between gap-3">
+                      <dt className="min-w-0 text-xs leading-relaxed text-zinc-300">{label}</dt>
+                      <dd className="shrink-0 font-mono text-xs font-semibold tabular-nums text-white">
                         {rowValue}{unit}
                       </dd>
                     </div>
@@ -213,7 +227,7 @@ export default function SetupDisplay({
                       aria-valuemin={bounds?.min}
                       aria-valuemax={bounds?.max}
                       aria-valuenow={Number.isFinite(numericValue) ? numericValue : undefined}
-                      className="h-1 w-full overflow-hidden rounded-full bg-white/10"
+                      className="mt-2 h-1 w-full overflow-hidden rounded-full bg-white/10"
                     >
                       <div
                         className="h-full rounded-full bg-violet-400 transition-[width]"

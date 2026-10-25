@@ -1,15 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const WORDS = ["setup", "ritmo", "bilanciamento", "tempo"];
 const PREFIX = "Trova il tuo ";
 
 export default function TextType() {
   const [wordIndex, setWordIndex] = useState(0);
-  const [visibleCount, setVisibleCount] = useState(0);
-  const [deleting, setDeleting] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
+  const animatedWordRef = useRef(null);
   const word = WORDS[wordIndex];
 
   useEffect(() => {
@@ -24,19 +23,37 @@ export default function TextType() {
     if (reduceMotion) return;
 
     let timeout;
-    if (!deleting && visibleCount < word.length) {
-      timeout = window.setTimeout(() => setVisibleCount((count) => count + 1), 90);
-    } else if (!deleting) {
-      timeout = window.setTimeout(() => setDeleting(true), 1400);
-    } else if (visibleCount > 0) {
-      timeout = window.setTimeout(() => setVisibleCount((count) => count - 1), 38);
-    } else {
-      setWordIndex((index) => (index + 1) % WORDS.length);
-      setDeleting(false);
-    }
+    let visibleCount = 0;
+    let deleting = false;
+
+    const updateText = () => {
+      if (animatedWordRef.current) {
+        animatedWordRef.current.textContent = word.slice(0, visibleCount);
+      }
+    };
+
+    const animate = () => {
+      if (!deleting && visibleCount < word.length) {
+        visibleCount += 1;
+        updateText();
+        timeout = window.setTimeout(animate, 90);
+      } else if (!deleting) {
+        deleting = true;
+        timeout = window.setTimeout(animate, 1400);
+      } else if (visibleCount > 0) {
+        visibleCount -= 1;
+        updateText();
+        timeout = window.setTimeout(animate, 38);
+      } else {
+        setWordIndex((index) => (index + 1) % WORDS.length);
+      }
+    };
+
+    if (animatedWordRef.current) animatedWordRef.current.textContent = "";
+    timeout = window.setTimeout(animate, 90);
 
     return () => window.clearTimeout(timeout);
-  }, [deleting, reduceMotion, visibleCount, word]);
+  }, [reduceMotion, word, wordIndex]);
 
   return (
     <h1
@@ -45,10 +62,11 @@ export default function TextType() {
     >
       <span className="text-zinc-400">{PREFIX}</span>
       <span
+        ref={animatedWordRef}
         aria-hidden="true"
         className="bg-gradient-to-r from-violet-300 to-white bg-clip-text text-transparent"
       >
-        {reduceMotion ? word : word.slice(0, visibleCount)}
+        {reduceMotion ? word : ""}
       </span>
       {!reduceMotion && (
         <span aria-hidden="true" className="ml-0.5 animate-pulse text-violet-300">

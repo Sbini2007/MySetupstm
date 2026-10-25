@@ -14,8 +14,8 @@ function LoginInner() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const initialMode = searchParams.get("mode") === "register" ? "register" : "login";
-  const [mode, setMode] = useState(initialMode); // "login" | "register"
+  const isRegistrationPage = searchParams.get("mode") === "register";
+  const [mode, setMode] = useState(isRegistrationPage ? "register" : "login");
   const redirectTarget = searchParams.get("redirect") || "/setups";
 
   // Form states
@@ -25,6 +25,12 @@ function LoginInner() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
+
+  useEffect(() => {
+    setMode(isRegistrationPage ? "register" : "login");
+    setErrorMsg("");
+    setSuccessMsg("");
+  }, [isRegistrationPage]);
 
   useEffect(() => {
     if (status === "authenticated" && session?.user) {
@@ -110,14 +116,14 @@ function LoginInner() {
   return (
     <div className="min-h-screen bg-[#050508] text-white">
       <NavBar />
-      <main className="relative mx-auto flex min-h-[85vh] max-w-md items-center justify-center px-4 py-16">
+      <main className="relative mx-auto flex min-h-[85vh] max-w-md items-center justify-center px-4 pt-28 pb-16">
         <div className="w-full rounded-3xl border border-white/10 bg-[#0c0d16] p-8 shadow-2xl relative overflow-hidden">
           {/* Subtle gradient glow */}
           <div className="absolute -top-24 -left-24 h-48 w-48 rounded-full bg-white/[0.03] blur-3xl pointer-events-none" />
 
           {/* Logo & Header */}
           <div className="text-center">
-            <div className="relative mx-auto mb-4 h-16 w-16">
+            <div className="relative mx-auto mb-4 h-20 w-20">
               <Image
                 src={logoImg}
                 alt="MySetups"
@@ -137,40 +143,42 @@ function LoginInner() {
           </div>
 
           {/* Tab switch between Login and Register */}
-          <div className="mt-6 flex rounded-xl border border-white/10 bg-white/[0.02] p-1">
-            <button
-              type="button"
-              onClick={() => {
-                setMode("login");
-                setErrorMsg("");
-                setSuccessMsg("");
-              }}
-              className={`flex-1 rounded-lg py-2 text-xs font-bold transition flex items-center justify-center gap-1.5 ${
-                mode === "login"
-                  ? "bg-white text-black shadow-sm"
-                  : "text-zinc-400 hover:text-white"
-              }`}
-            >
-              <LogIn size={13} />
-              <span>Accedi</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setMode("register");
-                setErrorMsg("");
-                setSuccessMsg("");
-              }}
-              className={`flex-1 rounded-lg py-2 text-xs font-bold transition flex items-center justify-center gap-1.5 ${
-                mode === "register"
-                  ? "bg-white text-black shadow-sm"
-                  : "text-zinc-400 hover:text-white"
-              }`}
-            >
-              <UserPlus size={13} />
-              <span>Iscrizione</span>
-            </button>
-          </div>
+          {!isRegistrationPage && (
+            <div className="mt-6 flex rounded-xl border border-white/10 bg-white/[0.02] p-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setMode("login");
+                  setErrorMsg("");
+                  setSuccessMsg("");
+                }}
+                className={`flex-1 rounded-lg py-2 text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                  mode === "login"
+                    ? "bg-white text-black shadow-sm"
+                    : "text-zinc-400 hover:text-white"
+                }`}
+              >
+                <LogIn size={13} />
+                <span>Accedi</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMode("register");
+                  setErrorMsg("");
+                  setSuccessMsg("");
+                }}
+                className={`flex-1 rounded-lg py-2 text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                  mode === "register"
+                    ? "bg-white text-black shadow-sm"
+                    : "text-zinc-400 hover:text-white"
+                }`}
+              >
+                <UserPlus size={13} />
+                <span>Iscrizione</span>
+              </button>
+            </div>
+          )}
 
           {/* Alerts */}
           {errorMsg && (
@@ -191,7 +199,7 @@ function LoginInner() {
           <form onSubmit={handleCredentialsSubmit} className="mt-6 space-y-3.5">
             {mode === "register" && (
               <div>
-                <label className="text-[11px] font-mono text-zinc-400 uppercase tracking-wider block mb-1">
+                <label className="text-[11px] text-zinc-400 uppercase tracking-wider block mb-1">
                   Nome Pilota o Gamertag
                 </label>
                 <input
@@ -199,14 +207,14 @@ function LoginInner() {
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Es. Mario Rossi"
+                  placeholder="Inserisci il tuo nome o gamertag"
                   className="w-full rounded-xl border border-white/10 bg-black/40 px-3.5 py-2.5 text-xs text-white placeholder-zinc-500 outline-none transition focus:border-white/30"
                 />
               </div>
             )}
 
             <div>
-              <label className="text-[11px] font-mono text-zinc-400 uppercase tracking-wider block mb-1">
+              <label className="text-[11px] text-zinc-400 uppercase tracking-wider block mb-1">
                 Email
               </label>
               <input
@@ -214,13 +222,13 @@ function LoginInner() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="pilota@esempio.it"
+                placeholder="email@esempio.com"
                 className="w-full rounded-xl border border-white/10 bg-black/40 px-3.5 py-2.5 text-xs text-white placeholder-zinc-500 outline-none transition focus:border-white/30"
               />
             </div>
 
             <div>
-              <label className="text-[11px] font-mono text-zinc-400 uppercase tracking-wider block mb-1">
+              <label className="text-[11px] text-zinc-400 uppercase tracking-wider block mb-1">
                 Password
               </label>
               <input
@@ -259,8 +267,8 @@ function LoginInner() {
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-white/10" />
             </div>
-            <span className="relative bg-[#0c0d16] px-3 text-[10px] font-mono uppercase tracking-widest text-zinc-500">
-              Oppure
+            <span className="relative bg-[#0c0d16] px-3 text-[10px] uppercase tracking-widest text-zinc-500">
+              {isRegistrationPage ? "Oppure registrati con" : "Oppure"}
             </span>
           </div>
 
@@ -271,14 +279,7 @@ function LoginInner() {
               onClick={() => signIn("google", { callbackUrl: redirectTarget })}
               className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-white/15 bg-white/[0.04] px-4 py-2.5 text-xs font-semibold text-zinc-200 transition hover:bg-white/[0.08] hover:text-white"
             >
-              <span>Continua con Google</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => signIn("discord", { callbackUrl: redirectTarget })}
-              className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-white/15 bg-[#5865F2]/20 px-4 py-2.5 text-xs font-semibold text-[#8a98f7] transition hover:bg-[#5865F2]/30"
-            >
-              <span>Continua con Discord</span>
+              <span>{isRegistrationPage ? "Registrati con Google" : "Continua con Google"}</span>
             </button>
           </div>
         </div>

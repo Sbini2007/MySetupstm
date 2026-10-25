@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import {
   X,
+  ArrowRight,
   ArrowUpRight,
   Home,
   Sliders,
@@ -127,10 +128,11 @@ export default function NavBar() {
             {mounted && !user ? (
               <div className="hidden sm:flex items-center gap-2">
                 <Link
-                  href="/login?mode=register"
-                  className="rounded-xl bg-gradient-to-r from-[#5227ff] to-[#8b5cf6] px-3.5 py-1.5 text-xs font-bold text-white transition hover:brightness-110 shadow-lg shadow-violet-950/30 cursor-pointer"
+                  href="/register"
+                  className="signup-link"
                 >
-                  Iscriviti
+                  <span>Iscriviti</span>
+                  <ArrowRight size={15} aria-hidden="true" />
                 </Link>
               </div>
             ) : null}
@@ -205,8 +207,8 @@ export default function NavBar() {
             >
               {/* Top bar inside sliding panel */}
               <div className="sm-panel-topbar">
-                <div className="flex items-center gap-2.5">
-                  <div className="h-14 w-14 relative">
+                <div className="-ml-2 flex items-center gap-2.5">
+                  <div className="relative h-28 w-28">
                     <Image
                       src={logoImg}
                       alt="MySetups"
