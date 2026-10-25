@@ -41,7 +41,7 @@ export default function ReviewsPage() {
                 </p>
               </div>
               <div className="mt-6 border-t border-white/[0.08] pt-3">
-                <p className="text-xs font-semibold text-white">{rev.driver}</p>
+                <p className="text-xs font-semibold text-violet-300">{rev.driver}</p>
               </div>
             </div>
           ))}
