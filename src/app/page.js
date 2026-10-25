@@ -146,42 +146,54 @@ export default function HomePage() {
 
         {/* ================= FEEDBACK DEI PILOTI ================= */}
         <section className="mx-auto max-w-6xl px-4 pb-4 pt-8 sm:px-6 lg:px-8">
-          <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div className="mb-5">
             <div>
               <span className="text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-violet-300">
                 Feedback community
               </span>
-              <h2 className="mt-1 text-2xl font-black tracking-tight text-white sm:text-3xl">
+              <h2 className="mt-1 text-xl font-black tracking-tight text-white sm:text-2xl">
                 Le impressioni dei piloti
               </h2>
             </div>
-            <p className="max-w-md text-xs leading-relaxed text-zinc-400">
-              Esperienze e commenti di chi ha provato i nostri assetti in pista.
-            </p>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid auto-cols-[minmax(260px,1fr)] grid-flow-col gap-3 overflow-x-auto pb-3 xl:auto-cols-auto xl:grid-flow-row xl:grid-cols-4 xl:overflow-visible">
             {detailedReviews.map((review) => (
               <article
                 key={review.driver}
-                className="flex min-h-56 flex-col rounded-2xl border border-white/[0.08] bg-[#0c0d15] p-5 transition-colors duration-200 hover:border-violet-400/25"
+                onMouseMove={(event) => {
+                  const bounds = event.currentTarget.getBoundingClientRect();
+                  event.currentTarget.style.setProperty("--spotlight-x", `${event.clientX - bounds.left}px`);
+                  event.currentTarget.style.setProperty("--spotlight-y", `${event.clientY - bounds.top}px`);
+                }}
+                className="group relative flex min-h-64 flex-col overflow-hidden rounded-lg border border-white/[0.1] bg-[#0c0d15] p-5 transition-colors duration-300 hover:border-violet-300/40"
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex gap-1 text-amber-400" aria-label="5 stelle su 5">
-                    {Array.from({ length: 5 }, (_, index) => (
-                      <Star key={index} size={12} fill="currentColor" />
-                    ))}
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                  style={{
+                    background:
+                      "radial-gradient(220px circle at var(--spotlight-x, 50%) var(--spotlight-y, 50%), rgba(139, 92, 246, 0.2), transparent 78%)",
+                  }}
+                />
+                <div className="relative flex h-full flex-1 flex-col">
+                  <div className="flex items-center justify-between">
+                    <div className="flex gap-1 text-amber-400" aria-label="5 stelle su 5">
+                      {Array.from({ length: 5 }, (_, index) => (
+                        <Star key={index} size={12} fill="currentColor" />
+                      ))}
+                    </div>
+                    <Quote size={17} className="text-violet-300/70" aria-hidden="true" />
                   </div>
-                  <Quote size={16} className="text-violet-300/60" aria-hidden="true" />
-                </div>
-                <p className="mt-4 flex-1 text-xs leading-relaxed text-zinc-300">
-                  “{review.text}”
-                </p>
-                <div className="mt-5 border-t border-white/[0.07] pt-3">
-                  <p className="text-xs font-semibold text-white">{review.driver}</p>
-                  <div className="mt-1 flex flex-wrap items-center justify-between gap-1 text-[10px] text-zinc-500">
-                    <span>{review.role}</span>
-                    <span>{review.track}</span>
+                  <p className="mt-5 flex-1 text-xs leading-relaxed text-zinc-300 sm:text-[13px]">
+                    “{review.text}”
+                  </p>
+                  <div className="mt-5 border-t border-white/[0.08] pt-3">
+                    <p className="text-xs font-semibold text-white">{review.driver}</p>
+                    <div className="mt-1 flex flex-wrap items-center justify-between gap-1 text-[10px] text-zinc-500">
+                      <span>{review.role}</span>
+                      <span>{review.track}</span>
+                    </div>
                   </div>
                 </div>
               </article>
