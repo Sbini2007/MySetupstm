@@ -1,7 +1,14 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth-options";
-import { getServerUsers, setServerUserAdminFlag, setServerUserPremium, setServerUserRole } from "@/lib/server-store";
+import {
+  deleteServerUser,
+  getServerUsers,
+  setServerUserAdminFlag,
+  setServerUserPremium,
+  setServerUserRole,
+  upsertServerUser,
+} from "@/lib/server-store";
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
@@ -13,7 +20,7 @@ async function requireAdmin() {
 export async function GET() {
   const gate = await requireAdmin();
   if (gate.error) return gate.error;
-  return NextResponse.json({ users: getServerUsers() });
+  return NextResponse.json({ users: await getServerUsers() });
 }
 
 export async function PATCH(request) {
@@ -33,17 +40,17 @@ export async function PATCH(request) {
   }
 
   if (typeof role === "string") {
-    setServerUserRole(email, role);
+    await setServerUserRole(email, role);
   } else {
     if (typeof premium === "boolean") {
-      setServerUserPremium(email, premium);
+      await setServerUserPremium(email, premium);
     }
     if (typeof admin === "boolean") {
-      setServerUserAdminFlag(email, admin);
+      await setServerUserAdminFlag(email, admin);
     }
   }
 
-  return NextResponse.json({ users: getServerUsers() });
+  return NextResponse.json({ users: await getServerUsers() });
 }
 
 export async function POST(request) {
@@ -54,7 +61,7 @@ export async function POST(request) {
     const { email, name, role, premium, admin } = await request.json();
     if (!email) return NextResponse.json({ error: "Missing email" }, { status: 400 });
 
-    const users = upsertServerUser({
+    const users = await upsertServerUser({
       email,
       name: name || email.split("@")[0],
       role: role || "user",
@@ -79,8 +86,7 @@ export async function DELETE(request) {
     return NextResponse.json({ error: "Missing email param" }, { status: 400 });
   }
 
-  const { deleteServerUser } = await import("@/lib/server-store");
-  deleteServerUser(email);
+  await deleteServerUser(email);
 
-  return NextResponse.json({ ok: true, users: getServerUsers() });
+  return NextResponse.json({ ok: true, users: await getServerUsers() });
 }

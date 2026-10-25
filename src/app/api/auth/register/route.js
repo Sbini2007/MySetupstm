@@ -34,9 +34,19 @@ export async function POST(req) {
       },
     });
   } catch (err) {
+    const duplicate = err?.code === "USER_EXISTS";
+    const missingStorage = err?.code === "USER_STORE_NOT_CONFIGURED";
+    if (!duplicate) console.error("Account registration failed", err);
     return NextResponse.json(
-      { ok: false, error: err.message || "Errore durante la registrazione" },
-      { status: 400 }
+      {
+        ok: false,
+        error: duplicate
+          ? err.message
+          : missingStorage
+            ? "La registrazione non è disponibile: archivio account non configurato."
+            : "Errore durante la registrazione. Riprova più tardi.",
+      },
+      { status: duplicate ? 409 : missingStorage ? 503 : 500 }
     );
   }
 }

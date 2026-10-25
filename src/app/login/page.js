@@ -143,42 +143,40 @@ function LoginInner() {
           </div>
 
           {/* Tab switch between Login and Register */}
-          {!isRegistrationPage && (
-            <div className="mt-6 flex rounded-xl border border-white/10 bg-white/[0.02] p-1">
-              <button
-                type="button"
-                onClick={() => {
-                  setMode("login");
-                  setErrorMsg("");
-                  setSuccessMsg("");
-                }}
-                className={`flex-1 rounded-lg py-2 text-xs font-bold transition flex items-center justify-center gap-1.5 ${
-                  mode === "login"
-                    ? "bg-white text-black shadow-sm"
-                    : "text-zinc-400 hover:text-white"
-                }`}
-              >
-                <LogIn size={13} />
-                <span>Accedi</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setMode("register");
-                  setErrorMsg("");
-                  setSuccessMsg("");
-                }}
-                className={`flex-1 rounded-lg py-2 text-xs font-bold transition flex items-center justify-center gap-1.5 ${
-                  mode === "register"
-                    ? "bg-white text-black shadow-sm"
-                    : "text-zinc-400 hover:text-white"
-                }`}
-              >
-                <UserPlus size={13} />
-                <span>Iscrizione</span>
-              </button>
-            </div>
-          )}
+          <div className="mt-6 flex rounded-xl border border-white/10 bg-white/[0.02] p-1">
+            <button
+              type="button"
+              onClick={() => {
+                setMode("login");
+                setErrorMsg("");
+                setSuccessMsg("");
+              }}
+              className={`flex-1 rounded-lg py-2 text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                mode === "login"
+                  ? "bg-white text-black shadow-sm"
+                  : "text-zinc-400 hover:text-white"
+              }`}
+            >
+              <LogIn size={13} />
+              <span>Accedi</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMode("register");
+                setErrorMsg("");
+                setSuccessMsg("");
+              }}
+              className={`flex-1 rounded-lg py-2 text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                mode === "register"
+                  ? "bg-white text-black shadow-sm"
+                  : "text-zinc-400 hover:text-white"
+              }`}
+            >
+              <UserPlus size={13} />
+              <span>Iscriviti</span>
+            </button>
+          </div>
 
           {/* Alerts */}
           {errorMsg && (
@@ -268,7 +266,7 @@ function LoginInner() {
               <div className="w-full border-t border-white/10" />
             </div>
             <span className="relative bg-[#0c0d16] px-3 text-[10px] uppercase tracking-widest text-zinc-500">
-              {isRegistrationPage ? "Oppure registrati con" : "Oppure"}
+              {mode === "register" ? "Oppure registrati con" : "Oppure"}
             </span>
           </div>
 
@@ -279,7 +277,7 @@ function LoginInner() {
               onClick={() => signIn("google", { callbackUrl: redirectTarget })}
               className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-white/15 bg-white/[0.04] px-4 py-2.5 text-xs font-semibold text-zinc-200 transition hover:bg-white/[0.08] hover:text-white"
             >
-              <span>{isRegistrationPage ? "Registrati con Google" : "Continua con Google"}</span>
+              <span>{mode === "register" ? "Registrati con Google" : "Continua con Google"}</span>
             </button>
           </div>
         </div>

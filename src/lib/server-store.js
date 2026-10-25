@@ -1,116 +1,206 @@
 import fs from "fs";
 import path from "path";
+import { neon } from "@neondatabase/serverless";
 import { isAdminEmail } from "@/lib/admin-emails";
 import { hashPassword, verifyPassword } from "@/lib/passwords";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const USERS_FILE = path.join(DATA_DIR, "users.json");
+const MAX_NAME_LEN = 80;
+const MAX_AVATAR_BYTES = 380_000;
 
-function readJson(file, fallback) {
+let databaseClient;
+let databaseSetup;
+
+function getDatabase() {
+  if (!process.env.DATABASE_URL) {
+    if (process.env.NODE_ENV === "production") {
+      const error = new Error("Account storage is not configured. Set DATABASE_URL.");
+      error.code = "USER_STORE_NOT_CONFIGURED";
+      throw error;
+    }
+    return null;
+  }
+
+  databaseClient ||= neon(process.env.DATABASE_URL);
+  return databaseClient;
+}
+
+async function ensureDatabase(sql) {
+  if (!databaseSetup) {
+    databaseSetup = sql`
+      CREATE TABLE IF NOT EXISTS mysetups_users (
+        email TEXT PRIMARY KEY,
+        user_data JSONB NOT NULL
+      )
+    `;
+  }
+
   try {
-    if (!fs.existsSync(file)) return fallback;
-    const raw = fs.readFileSync(file, "utf8");
-    return JSON.parse(raw);
-  } catch {
-    return fallback;
+    await databaseSetup;
+  } catch (error) {
+    databaseSetup = null;
+    throw error;
   }
 }
 
-function writeJson(file, data) {
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, JSON.stringify(data, null, 2), "utf8");
+async function withStorage(databaseOperation, fileOperation) {
+  const sql = getDatabase();
+  if (!sql) return fileOperation();
+  await ensureDatabase(sql);
+  return databaseOperation(sql);
 }
 
-export function saveServerUsers(users) {
-  writeJson(USERS_FILE, users);
+function readFileUsers() {
+  if (!fs.existsSync(USERS_FILE)) return [];
+  const users = JSON.parse(fs.readFileSync(USERS_FILE, "utf8"));
+  if (!Array.isArray(users)) throw new Error("The local users store must contain a JSON array.");
+  return users;
 }
 
-const MAX_NAME_LEN = 80;
-const MAX_AVATAR_BYTES = 380_000;
+function writeFileUsers(users) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+  fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2), "utf8");
+}
 
 function sanitizeStoredImage(value) {
   if (typeof value !== "string") return "";
   const trimmed = value.trim();
-  if (!trimmed) return "";
-  if (trimmed.length > 2_000_000) return "";
+  if (!trimmed || trimmed.length > 2_000_000) return "";
   if (trimmed.startsWith("data:image/") && Buffer.byteLength(trimmed, "utf8") > MAX_AVATAR_BYTES) {
     return "";
   }
   return trimmed;
 }
 
-export function getServerUsers() {
-  const users = readJson(USERS_FILE, []);
-  if (!Array.isArray(users)) return [];
-  return users.map((user) => ({
+function normalizeUser(user) {
+  return {
     ...user,
     image: sanitizeStoredImage(user?.image),
     oauthImage: sanitizeStoredImage(user?.oauthImage),
-  }));
+  };
 }
 
-/**
- * Merge OAuth profile into the user list without downgrading premium/admin unless explicitly set.
- */
-export function upsertServerUser(partial) {
-  if (!partial?.email) return getServerUsers();
-  const users = getServerUsers();
-  const email = String(partial.email).toLowerCase();
-  const idx = users.findIndex((u) => String(u.email || "").toLowerCase() === email);
-  const adminFromList = isAdminEmail(partial.email);
+function findFileUser(email) {
+  if (!email) return null;
+  const lower = String(email).trim().toLowerCase();
+  const user = readFileUsers().find((entry) => String(entry.email || "").trim().toLowerCase() === lower);
+  return user ? normalizeUser(user) : null;
+}
 
-  if (idx >= 0) {
-    const prev = users[idx];
-    const role = partial.role !== undefined ? partial.role : prev.role || (prev.admin ? "admin" : prev.premium ? "subscriber" : "user");
-    users[idx] = {
-      ...prev,
+function writeFileUser(user) {
+  const users = readFileUsers();
+  const lower = String(user.email || "").trim().toLowerCase();
+  const index = users.findIndex((entry) => String(entry.email || "").trim().toLowerCase() === lower);
+  if (index === -1) users.unshift(user);
+  else users[index] = user;
+  writeFileUsers(users);
+}
+
+async function findDatabaseUser(sql, email) {
+  if (!email) return null;
+  const lower = String(email).trim().toLowerCase();
+  const rows = await sql`SELECT user_data FROM mysetups_users WHERE email = ${lower} LIMIT 1`;
+  return rows[0]?.user_data ? normalizeUser(rows[0].user_data) : null;
+}
+
+async function readDatabaseUsers(sql) {
+  const rows = await sql`
+    SELECT user_data FROM mysetups_users
+    ORDER BY user_data->>'createdAt' DESC NULLS LAST
+  `;
+  return rows.map((row) => normalizeUser(row.user_data));
+}
+
+async function writeDatabaseUser(sql, user) {
+  const email = String(user.email || "").trim().toLowerCase();
+  const normalizedUser = { ...user, email };
+  await sql`
+    INSERT INTO mysetups_users (email, user_data)
+    VALUES (${email}, ${JSON.stringify(normalizedUser)}::jsonb)
+    ON CONFLICT (email)
+    DO UPDATE SET user_data = EXCLUDED.user_data
+  `;
+}
+
+async function readUsers() {
+  return withStorage(readDatabaseUsers, readFileUsers);
+}
+
+async function findUser(email) {
+  return withStorage(
+    (sql) => findDatabaseUser(sql, email),
+    () => findFileUser(email)
+  );
+}
+
+async function persistUser(user) {
+  return withStorage(
+    (sql) => writeDatabaseUser(sql, user),
+    () => writeFileUser(user)
+  );
+}
+
+function buildUpsertedUser(partial, previous) {
+  const adminFromList = isAdminEmail(partial.email);
+  if (previous) {
+    const role = partial.role !== undefined
+      ? partial.role
+      : previous.role || (previous.admin ? "admin" : previous.premium ? "subscriber" : "user");
+    return {
+      ...previous,
       ...partial,
-      email: partial.email,
+      email: String(partial.email).trim().toLowerCase(),
       role: adminFromList ? "admin" : role,
-      premium: partial.premium !== undefined ? partial.premium : (role !== "user" ? true : prev.premium),
-      admin: partial.admin !== undefined ? partial.admin : (adminFromList || role === "admin" || prev.admin),
-      createdAt: prev.createdAt || partial.createdAt || new Date().toISOString(),
-      password: partial.password || prev.password,
-      image: sanitizeStoredImage(partial.image ?? prev.image),
-      oauthImage: sanitizeStoredImage(partial.oauthImage ?? prev.oauthImage ?? partial.image ?? prev.image),
+      premium: partial.premium !== undefined ? partial.premium : (role !== "user" ? true : previous.premium),
+      admin: partial.admin !== undefined ? partial.admin : (adminFromList || role === "admin" || previous.admin),
+      createdAt: previous.createdAt || partial.createdAt || new Date().toISOString(),
+      password: partial.password || previous.password,
+      image: sanitizeStoredImage(partial.image ?? previous.image),
+      oauthImage: sanitizeStoredImage(partial.oauthImage ?? previous.oauthImage ?? partial.image ?? previous.image),
     };
-  } else {
-    const role = adminFromList ? "admin" : partial.role || (partial.admin ? "admin" : partial.premium ? "subscriber" : "user");
-    users.unshift({
-      id: Date.now(),
-      role,
-      premium: partial.premium ?? (role !== "user"),
-      admin: partial.admin ?? (adminFromList || role === "admin"),
-      name: partial.name || partial.email.split("@")[0],
-      email: partial.email,
-      createdAt: partial.createdAt || new Date().toISOString(),
-      password: partial.password || null,
-      image: sanitizeStoredImage(partial.image),
-      oauthName: partial.oauthName ?? partial.name,
-      oauthImage: sanitizeStoredImage(partial.oauthImage ?? partial.image),
-      provider: partial.provider || "credentials",
-    });
   }
-  saveServerUsers(users);
-  return users;
+
+  const role = adminFromList ? "admin" : partial.role || (partial.admin ? "admin" : partial.premium ? "subscriber" : "user");
+  const email = String(partial.email).trim().toLowerCase();
+  return {
+    id: Date.now(),
+    role,
+    premium: partial.premium ?? (role !== "user"),
+    admin: partial.admin ?? (adminFromList || role === "admin"),
+    name: partial.name || email.split("@")[0],
+    email,
+    createdAt: partial.createdAt || new Date().toISOString(),
+    password: partial.password || null,
+    image: sanitizeStoredImage(partial.image),
+    oauthName: partial.oauthName ?? partial.name,
+    oauthImage: sanitizeStoredImage(partial.oauthImage ?? partial.image),
+    provider: partial.provider || "credentials",
+  };
+}
+
+export async function getServerUsers() {
+  return (await readUsers()).map(normalizeUser);
+}
+
+export async function upsertServerUser(partial) {
+  if (!partial?.email) return getServerUsers();
+  const email = String(partial.email).trim().toLowerCase();
+  const previous = await findUser(email);
+  await persistUser(buildUpsertedUser({ ...partial, email }, previous));
+  return getServerUsers();
 }
 
 export async function registerServerUser({ name, email, password }) {
   if (!email) throw new Error("Email richiesta");
   const normalizedEmail = String(email).trim().toLowerCase();
-  const existing = getServerUserByEmail(normalizedEmail);
-  if (existing) {
-    throw new Error("Un account con questa email esiste già");
-  }
-
   const adminFromList = isAdminEmail(normalizedEmail);
-  const role = adminFromList ? "admin" : "user";
   const newUser = {
     id: Date.now(),
     name: (name && String(name).trim()) || normalizedEmail.split("@")[0],
     email: normalizedEmail,
     password: password ? await hashPassword(password) : "",
-    role,
+    role: adminFromList ? "admin" : "user",
     premium: adminFromList,
     admin: adminFromList,
     createdAt: new Date().toISOString(),
@@ -118,55 +208,70 @@ export async function registerServerUser({ name, email, password }) {
     image: "",
   };
 
-  const users = getServerUsers();
-  users.unshift(newUser);
-  saveServerUsers(users);
-  return newUser;
+  return withStorage(async (sql) => {
+    const rows = await sql`
+      INSERT INTO mysetups_users (email, user_data)
+      VALUES (${normalizedEmail}, ${JSON.stringify(newUser)}::jsonb)
+      ON CONFLICT (email) DO NOTHING
+      RETURNING user_data
+    `;
+    if (!rows.length) {
+      const error = new Error("Un account con questa email esiste già");
+      error.code = "USER_EXISTS";
+      throw error;
+    }
+    return normalizeUser(rows[0].user_data);
+  }, () => {
+    if (findFileUser(normalizedEmail)) {
+      const error = new Error("Un account con questa email esiste già");
+      error.code = "USER_EXISTS";
+      throw error;
+    }
+    writeFileUser(newUser);
+    return newUser;
+  });
 }
 
 export async function setServerUserPassword(email, password) {
-  const users = getServerUsers();
-  const lower = String(email || "").trim().toLowerCase();
-  const index = users.findIndex((user) => String(user.email || "").toLowerCase() === lower);
-  if (index === -1) return false;
-  users[index] = { ...users[index], password: await hashPassword(password) };
-  saveServerUsers(users);
+  const user = await findUser(email);
+  if (!user) return false;
+  await persistUser({ ...user, password: await hashPassword(password) });
   return true;
 }
 
 export async function authenticateServerUser(email, password) {
-  const user = getServerUserByEmail(email);
+  const user = await findUser(email);
   if (!user?.password) return null;
   const result = await verifyPassword(password, user.password);
   if (!result.valid) return null;
   if (result.needsRehash) {
     await setServerUserPassword(user.email, password);
   }
-  return getServerUserByEmail(user.email);
+  return findUser(user.email);
 }
 
-export function deleteServerUser(email) {
+export async function deleteServerUser(email) {
   if (!email) return false;
   const lower = String(email).trim().toLowerCase();
-  const users = getServerUsers();
-  const next = users.filter((u) => String(u.email || "").toLowerCase() !== lower);
-  if (next.length !== users.length) {
-    saveServerUsers(next);
+  return withStorage(async (sql) => {
+    const rows = await sql`DELETE FROM mysetups_users WHERE email = ${lower} RETURNING email`;
+    return rows.length > 0;
+  }, () => {
+    const users = readFileUsers();
+    const next = users.filter((user) => String(user.email || "").toLowerCase() !== lower);
+    if (next.length === users.length) return false;
+    writeFileUsers(next);
     return true;
-  }
-  return false;
+  });
 }
 
-export function setServerUserRole(email, role) {
-  const users = getServerUsers();
-  const lower = String(email || "").toLowerCase();
+export async function setServerUserRole(email, role) {
   const adminFromList = isAdminEmail(email);
   const targetRole = adminFromList ? "admin" : role;
   const isPrivileged = targetRole === "admin" || targetRole === "editor" || targetRole === "vip" || targetRole === "subscriber";
-
-  const idx = users.findIndex((u) => String(u.email || "").toLowerCase() === lower);
-  if (idx === -1) {
-    upsertServerUser({
+  const user = await findUser(email);
+  if (!user) {
+    await upsertServerUser({
       email,
       name: String(email).split("@")[0],
       role: targetRole,
@@ -176,87 +281,64 @@ export function setServerUserRole(email, role) {
     return getServerUsers();
   }
 
-  const next = users.map((u) => {
-    if (String(u.email || "").toLowerCase() !== lower) return u;
-    return {
-      ...u,
-      role: targetRole,
-      premium: isPrivileged,
-      admin: targetRole === "admin" || adminFromList,
-    };
+  await persistUser({
+    ...user,
+    role: targetRole,
+    premium: isPrivileged,
+    admin: targetRole === "admin" || adminFromList,
   });
-  saveServerUsers(next);
-  return next;
+  return getServerUsers();
 }
 
-export function setServerUserPremium(email, premium) {
-  const users = getServerUsers();
-  const lower = String(email || "").toLowerCase();
-  const idx = users.findIndex((u) => String(u.email || "").toLowerCase() === lower);
-  if (idx === -1) {
-    upsertServerUser({ email, name: String(email).split("@")[0], premium, role: premium ? "subscriber" : "user" });
+export async function setServerUserPremium(email, premium) {
+  const user = await findUser(email);
+  if (!user) {
+    await upsertServerUser({ email, name: String(email).split("@")[0], premium, role: premium ? "subscriber" : "user" });
     return getServerUsers();
   }
-  const next = users.map((u) => {
-    if (String(u.email || "").toLowerCase() !== lower) return u;
-    const role = premium ? (u.role === "admin" ? "admin" : u.role === "vip" ? "vip" : "subscriber") : "user";
-    return { ...u, premium, role };
-  });
-  saveServerUsers(next);
-  return next;
+  const role = premium ? (user.role === "admin" ? "admin" : user.role === "vip" ? "vip" : "subscriber") : "user";
+  await persistUser({ ...user, premium, role });
+  return getServerUsers();
 }
 
-export function setServerUserAdminFlag(email, admin) {
-  const users = getServerUsers();
-  const lower = String(email || "").toLowerCase();
-  const idx = users.findIndex((u) => String(u.email || "").toLowerCase() === lower);
-  if (idx === -1) {
-    upsertServerUser({ email, name: String(email).split("@")[0], admin, role: admin ? "admin" : "user", premium: admin });
+export async function setServerUserAdminFlag(email, admin) {
+  const user = await findUser(email);
+  if (!user) {
+    await upsertServerUser({
+      email,
+      name: String(email).split("@")[0],
+      admin,
+      role: admin ? "admin" : "user",
+      premium: admin,
+    });
     return getServerUsers();
   }
-  const next = users.map((u) => {
-    if (String(u.email || "").toLowerCase() !== lower) return u;
-    const role = admin ? "admin" : (u.premium ? "subscriber" : "user");
-    return { ...u, admin, role };
+  const role = admin ? "admin" : (user.premium ? "subscriber" : "user");
+  await persistUser({ ...user, admin, role });
+  return getServerUsers();
+}
+
+export async function getServerUserByEmail(email) {
+  return findUser(email);
+}
+
+export async function patchServerUserOAuth(email, { oauthName, oauthImage, provider }) {
+  const user = await findUser(email);
+  if (!user) return getServerUsers();
+  await persistUser({
+    ...user,
+    oauthName: oauthName ?? user.oauthName ?? user.name,
+    oauthImage: sanitizeStoredImage(oauthImage ?? user.oauthImage ?? user.image),
+    provider: provider ?? user.provider,
   });
-  saveServerUsers(next);
-  return next;
+  return getServerUsers();
 }
 
-export function getServerUserByEmail(email) {
-  if (!email) return null;
-  const lower = String(email).toLowerCase();
-  return getServerUsers().find((u) => String(u.email || "").toLowerCase() === lower) || null;
-}
+export async function updateServerUserProfile(email, { name, image }) {
+  const user = await findUser(email);
+  if (!user) return { ok: false, error: "User not found" };
 
-/** After first login: refresh OAuth snapshot without overwriting custom name/image. */
-export function patchServerUserOAuth(email, { oauthName, oauthImage, provider }) {
-  const users = getServerUsers();
-  const lower = String(email || "").toLowerCase();
-  const idx = users.findIndex((u) => String(u.email || "").toLowerCase() === lower);
-  if (idx === -1) return getServerUsers();
-  const prev = users[idx];
-  users[idx] = {
-    ...prev,
-    oauthName: oauthName ?? prev.oauthName ?? prev.name,
-    oauthImage: sanitizeStoredImage(oauthImage ?? prev.oauthImage ?? prev.image),
-    provider: provider ?? prev.provider,
-  };
-  saveServerUsers(users);
-  return users;
-}
-
-/**
- * Public display name + avatar (URL or data:image/...;base64,...).
- * Empty image string → clear custom avatar (fallback to OAuth in JWT).
- */
-export function updateServerUserProfile(email, { name, image }) {
-  const users = getServerUsers();
-  const lower = String(email || "").toLowerCase();
-  const idx = users.findIndex((u) => String(u.email || "").toLowerCase() === lower);
-  if (idx === -1) return { ok: false, error: "User not found" };
-
-  const next = { ...users[idx] };
+  const next = { ...user };
   if (typeof name === "string") {
     const trimmed = name.trim().slice(0, MAX_NAME_LEN);
     next.name = trimmed || next.email?.split("@")[0] || "User";
@@ -269,7 +351,6 @@ export function updateServerUserProfile(email, { name, image }) {
     }
     next.image = sanitized;
   }
-  users[idx] = next;
-  saveServerUsers(users);
+  await persistUser(next);
   return { ok: true };
 }

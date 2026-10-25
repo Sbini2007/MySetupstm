@@ -26,7 +26,7 @@ export async function GET(_req, context) {
     );
   }
 
-  const fullSetup = getTrackSetupFlat(slug);
+  const fullSetup = await getTrackSetupFlat(slug);
 
   return NextResponse.json(
     {

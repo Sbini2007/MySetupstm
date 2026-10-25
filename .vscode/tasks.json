@@ -1,0 +1,20 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "MySetups: start local site",
+      "type": "shell",
+      "command": "node",
+      "args": [".vscode\\start-local-site.mjs"],
+      "isBackground": true,
+      "runOptions": {
+        "runOn": "folderOpen"
+      },
+      "presentation": {
+        "reveal": "never",
+        "focus": false,
+        "panel": "dedicated"
+      }
+    }
+  ]
+}

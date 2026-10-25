@@ -15,7 +15,7 @@ export async function GET() {
     );
   }
 
-  const setups = getAllTrackSetups();
+  const setups = await getAllTrackSetups();
   return NextResponse.json({
     isAuthorized: true,
     setups,

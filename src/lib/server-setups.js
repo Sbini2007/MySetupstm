@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { neon } from "@neondatabase/serverless";
 import { setups as legacySetups, tracks } from "@/lib/data";
 import { emptyFlatSetupForSlug, mergeLegacySetup } from "@/lib/setup-keys";
 import { generateFlatSetup } from "@/lib/default-setups";
@@ -7,16 +8,18 @@ import { clampValue, SETUP_SECTIONS } from "@/lib/setup-sections";
 
 const FILE = path.join(process.cwd(), "data", "track-setups.json");
 const SETUP_PREFIXES = ["race", "quali", "parc_ferme"];
+let databaseClient;
+let databaseSetup;
 const NUMERIC_SETUP_FIELDS = SETUP_SECTIONS.flatMap((section) =>
   section.fields.map((field) => field.suffix)
 );
 
 function readFile() {
   try {
-    if (!fs.existsSync(FILE)) return {};
     return JSON.parse(fs.readFileSync(FILE, "utf8"));
-  } catch {
-    return {};
+  } catch (error) {
+    if (error?.code === "ENOENT") return {};
+    throw error;
   }
 }
 
@@ -62,122 +65,135 @@ function mergeSetupWithDefaults(slug, setup) {
   return attachUpdatedAt(merged);
 }
 
+function getDatabase() {
+  if (!process.env.DATABASE_URL) {
+    if (process.env.NODE_ENV === "production") {
+      const error = new Error("Setup storage is not configured. Set DATABASE_URL.");
+      error.code = "SETUP_STORE_NOT_CONFIGURED";
+      throw error;
+    }
+    return null;
+  }
+
+  databaseClient ||= neon(process.env.DATABASE_URL);
+  return databaseClient;
+}
+
 function seedFromLegacy() {
   const out = {};
-  for (const t of tracks) {
-    const base = generateFlatSetup(t.slug);
-    const leg = legacySetups[t.slug];
-    if (leg) {
-      Object.assign(base, mergeLegacySetup(leg));
-    }
-    out[t.slug] = attachUpdatedAt(base, new Date().toISOString());
+  for (const track of tracks) {
+    const base = generateFlatSetup(track.slug);
+    const legacy = legacySetups[track.slug];
+    if (legacy) Object.assign(base, mergeLegacySetup(legacy));
+    out[track.slug] = attachUpdatedAt(base, new Date().toISOString());
   }
   return out;
 }
 
-export function getAllTrackSetups() {
-  let data = readFile();
-  if (!data || typeof data !== "object" || Object.keys(data).length === 0) {
-    data = seedFromLegacy();
-    writeFile(data);
-  }
-
-  for (const t of tracks) {
-    if (!data[t.slug]) {
-      const generated = generateFlatSetup(t.slug);
-      if (legacySetups[t.slug]) {
-        Object.assign(generated, mergeLegacySetup(legacySetups[t.slug]));
-      }
-      data[t.slug] = mergeSetupWithDefaults(t.slug, generated);
-    } else {
-      data[t.slug] = mergeSetupWithDefaults(t.slug, data[t.slug]);
-    }
-  }
-
-  writeFile(data);
-  return data;
-}
-
-export function getTrackSetupFlat(slug) {
-  const all = getAllTrackSetups();
-  const base = all[slug] || generateFlatSetup(slug);
-  return attachUpdatedAt(base);
-}
-
-export function saveTrackSetupFlat(slug, flat) {
-  const all = getAllTrackSetups();
-  const prev = all[slug] || emptyFlatSetupForSlug();
-  const nextData = { ...prev, ...flat };
-
-  // Enforce parameter boundaries across all variations (race, quali, parc_ferme)
-  for (const [key, value] of Object.entries(nextData)) {
-    for (const prefix of SETUP_PREFIXES.map((variation) => `${variation}_`)) {
-      if (key.startsWith(prefix)) {
-        const suffix = key.slice(prefix.length);
-        if (typeof value === "number") {
-          nextData[key] = clampValue(suffix, value);
+async function ensureDatabase(sql) {
+  if (!databaseSetup) {
+    databaseSetup = (async () => {
+      await sql`
+        CREATE TABLE IF NOT EXISTS mysetups_track_setups (
+          slug TEXT PRIMARY KEY,
+          setup JSONB NOT NULL
+        )
+      `;
+      const rows = await sql`SELECT COUNT(*)::int AS count FROM mysetups_track_setups`;
+      if (Number(rows[0]?.count || 0) === 0) {
+        let initialData = readFile();
+        if (!initialData || typeof initialData !== "object" || Object.keys(initialData).length === 0) {
+          initialData = seedFromLegacy();
         }
+        const inserts = Object.entries(initialData).map(
+          ([slug, setup]) => sql`
+            INSERT INTO mysetups_track_setups (slug, setup)
+            VALUES (${slug}, ${JSON.stringify(setup)}::jsonb)
+            ON CONFLICT (slug) DO NOTHING
+          `
+        );
+        if (inserts.length) await sql.transaction(inserts);
       }
-    }
+    })();
   }
 
-  if (flat.latest_variation) {
-    nextData.latest_variation = flat.latest_variation;
+  try {
+    await databaseSetup;
+  } catch (error) {
+    databaseSetup = null;
+    throw error;
   }
-  all[slug] = mergeSetupWithDefaults(slug, {
-    ...nextData,
-    updatedAt: new Date().toISOString(),
-  });
-  writeFile(all);
-  return all[slug];
 }
 
-export function duplicateTrackSetup(sourceSlug, targetSlug, variantFrom = null, variantTo = null) {
-  const all = getAllTrackSetups();
-  const source = all[sourceSlug] || generateFlatSetup(sourceSlug);
-  const target = all[targetSlug] || generateFlatSetup(targetSlug);
-
-  if (variantFrom && variantTo) {
-    const fromPrefix = `${variantFrom}_`;
-    const toPrefix = `${variantTo}_`;
-    for (const [key, value] of Object.entries(source)) {
-      if (key.startsWith(fromPrefix)) {
-        const suffix = key.slice(fromPrefix.length);
-        target[`${toPrefix}${suffix}`] = value;
-      }
+async function readStoredSetups() {
+  const sql = getDatabase();
+  if (!sql) {
+    const data = readFile();
+    if (!data || typeof data !== "object" || Object.keys(data).length === 0) {
+      return seedFromLegacy();
     }
-    target.latest_variation = `Duplicato da ${variantFrom.toUpperCase()} a ${variantTo.toUpperCase()}`;
-  } else {
-    Object.assign(target, { ...source });
-    target.latest_variation = `Duplicato interamente da ${sourceSlug}`;
+    return data;
   }
 
-  all[targetSlug] = mergeSetupWithDefaults(targetSlug, target);
-  writeFile(all);
-  return all[targetSlug];
+  await ensureDatabase(sql);
+  const rows = await sql`SELECT slug, setup FROM mysetups_track_setups`;
+  return Object.fromEntries(rows.map((row) => [row.slug, row.setup]));
 }
 
-export function deleteTrackSetup(slug) {
-  const all = getAllTrackSetups();
-  if (all[slug]) {
-    // Reset to clean default
-    all[slug] = attachUpdatedAt(generateFlatSetup(slug));
+async function writeStoredSetup(slug, setup) {
+  const sql = getDatabase();
+  if (!sql) {
+    const all = await readStoredSetups();
+    all[slug] = setup;
     writeFile(all);
-    return true;
+    return;
   }
-  return false;
+
+  await ensureDatabase(sql);
+  await sql`
+    INSERT INTO mysetups_track_setups (slug, setup)
+    VALUES (${slug}, ${JSON.stringify(setup)}::jsonb)
+    ON CONFLICT (slug)
+    DO UPDATE SET setup = EXCLUDED.setup
+  `;
 }
 
-export function createTrackSetup(slug, customData = {}) {
-  const all = getAllTrackSetups();
-  const base = generateFlatSetup(slug);
-  all[slug] = mergeSetupWithDefaults(slug, { ...base, ...customData });
-  writeFile(all);
-  return all[slug];
+async function writeStoredSetups(setups) {
+  const sql = getDatabase();
+  if (!sql) {
+    writeFile(setups);
+    return;
+  }
+
+  await ensureDatabase(sql);
+  const queries = Object.entries(setups).map(
+    ([slug, setup]) => sql`
+      INSERT INTO mysetups_track_setups (slug, setup)
+      VALUES (${slug}, ${JSON.stringify(setup)}::jsonb)
+      ON CONFLICT (slug)
+      DO UPDATE SET setup = EXCLUDED.setup
+    `
+  );
+  if (queries.length) await sql.transaction(queries);
 }
 
-export function getLatestTrackUpdate() {
-  const all = readFile();
+function getAllWithDefaults(data) {
+  const all = { ...data };
+  for (const track of tracks) {
+    if (!all[track.slug]) {
+      const generated = generateFlatSetup(track.slug);
+      if (legacySetups[track.slug]) {
+        Object.assign(generated, mergeLegacySetup(legacySetups[track.slug]));
+      }
+      all[track.slug] = mergeSetupWithDefaults(track.slug, generated);
+    } else {
+      all[track.slug] = mergeSetupWithDefaults(track.slug, all[track.slug]);
+    }
+  }
+  return all;
+}
+
+function getLatestTrackUpdateFromSetups(all) {
   let latest = null;
 
   for (const [slug, setup] of Object.entries(all || {})) {
@@ -216,9 +232,90 @@ export function getLatestTrackUpdate() {
   };
 }
 
-export function saveAllTrackSetups(all) {
+export async function getAllTrackSetups() {
+  return getAllWithDefaults(await readStoredSetups());
+}
+
+export async function getTrackSetupFlat(slug) {
+  const all = await getAllTrackSetups();
+  const base = all[slug] || generateFlatSetup(slug);
+  return attachUpdatedAt(base);
+}
+
+export async function saveTrackSetupFlat(slug, flat) {
+  const all = await getAllTrackSetups();
+  const prev = all[slug] || emptyFlatSetupForSlug();
+  const nextData = { ...prev, ...flat };
+
+  for (const [key, value] of Object.entries(nextData)) {
+    for (const prefix of SETUP_PREFIXES.map((variation) => `${variation}_`)) {
+      if (key.startsWith(prefix)) {
+        const suffix = key.slice(prefix.length);
+        if (typeof value === "number") {
+          nextData[key] = clampValue(suffix, value);
+        }
+      }
+    }
+  }
+
+  if (flat.latest_variation) {
+    nextData.latest_variation = flat.latest_variation;
+  }
+  all[slug] = mergeSetupWithDefaults(slug, {
+    ...nextData,
+    updatedAt: new Date().toISOString(),
+  });
+  await writeStoredSetup(slug, all[slug]);
+  return all[slug];
+}
+
+export async function duplicateTrackSetup(sourceSlug, targetSlug, variantFrom = null, variantTo = null) {
+  const all = await getAllTrackSetups();
+  const source = all[sourceSlug] || generateFlatSetup(sourceSlug);
+  const target = all[targetSlug] || generateFlatSetup(targetSlug);
+
+  if (variantFrom && variantTo) {
+    const fromPrefix = `${variantFrom}_`;
+    const toPrefix = `${variantTo}_`;
+    for (const [key, value] of Object.entries(source)) {
+      if (key.startsWith(fromPrefix)) {
+        const suffix = key.slice(fromPrefix.length);
+        target[`${toPrefix}${suffix}`] = value;
+      }
+    }
+    target.latest_variation = `Duplicato da ${variantFrom.toUpperCase()} a ${variantTo.toUpperCase()}`;
+  } else {
+    Object.assign(target, { ...source });
+    target.latest_variation = `Duplicato interamente da ${sourceSlug}`;
+  }
+
+  all[targetSlug] = mergeSetupWithDefaults(targetSlug, target);
+  await writeStoredSetup(targetSlug, all[targetSlug]);
+  return all[targetSlug];
+}
+
+export async function deleteTrackSetup(slug) {
+  const all = await getAllTrackSetups();
+  if (!all[slug]) return false;
+  all[slug] = attachUpdatedAt(generateFlatSetup(slug));
+  await writeStoredSetup(slug, all[slug]);
+  return true;
+}
+
+export async function createTrackSetup(slug, customData = {}) {
+  const base = generateFlatSetup(slug);
+  const setup = mergeSetupWithDefaults(slug, { ...base, ...customData });
+  await writeStoredSetup(slug, setup);
+  return setup;
+}
+
+export async function getLatestTrackUpdate() {
+  return getLatestTrackUpdateFromSetups(await readStoredSetups());
+}
+
+export async function saveAllTrackSetups(all) {
   const next = Object.fromEntries(
     Object.entries(all || {}).map(([slug, setup]) => [slug, attachUpdatedAt(setup)])
   );
-  writeFile(next);
+  await writeStoredSetups(next);
 }

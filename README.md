@@ -29,6 +29,10 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
+### Account storage
+
+Production deployments require a Neon PostgreSQL connection string in the `DATABASE_URL` environment variable. The account and setup tables are created automatically when their stores are first used. On first setup-store access, existing `data/track-setups.json` content is copied into Neon if its setup table is empty. Local development without `DATABASE_URL` continues to use the ignored JSON files in `data/`.
+
 ## Deploy on Vercel
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.

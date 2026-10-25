@@ -27,7 +27,7 @@ export async function GET() {
   if (gate.error) return gate.error;
   const defaults = Object.fromEntries(tracks.map((track) => [track.slug, generateFlatSetup(track.slug)]));
   return NextResponse.json(
-    { setups: getAllTrackSetups(), defaults },
+    { setups: await getAllTrackSetups(), defaults },
     { headers: { "Cache-Control": "no-store" } }
   );
 }
@@ -48,7 +48,7 @@ export async function PUT(request) {
     return NextResponse.json({ error: "Slug o setup mancanti" }, { status: 400 });
   }
 
-  const saved = saveTrackSetupFlat(slug, setup);
+  const saved = await saveTrackSetupFlat(slug, setup);
   return NextResponse.json({ ok: true, slug, setup: saved }, { headers: { "Cache-Control": "no-store" } });
 }
 
@@ -66,14 +66,14 @@ export async function POST(request) {
   const { action, sourceSlug, targetSlug, variantFrom, variantTo, slug, setup } = body;
 
   if (action === "duplicate" && sourceSlug && targetSlug) {
-    const duplicated = duplicateTrackSetup(sourceSlug, targetSlug, variantFrom, variantTo);
+    const duplicated = await duplicateTrackSetup(sourceSlug, targetSlug, variantFrom, variantTo);
     return NextResponse.json({ ok: true, setup: duplicated, message: "Setup duplicato con successo." });
   }
 
   if (action === "create" || slug) {
     const target = slug || targetSlug;
     if (!target) return NextResponse.json({ error: "Slug mancante" }, { status: 400 });
-    const created = createTrackSetup(target, setup || {});
+    const created = await createTrackSetup(target, setup || {});
     return NextResponse.json({ ok: true, setup: created, message: "Setup creato con successo." });
   }
 
@@ -96,6 +96,6 @@ export async function DELETE(request) {
     return NextResponse.json({ error: "Slug mancante per l'eliminazione" }, { status: 400 });
   }
 
-  const deleted = deleteTrackSetup(slug);
+  const deleted = await deleteTrackSetup(slug);
   return NextResponse.json({ ok: deleted, message: deleted ? "Setup ripristinato con successo." : "Pista non trovata." });
 }

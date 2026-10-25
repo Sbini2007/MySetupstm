@@ -4,7 +4,6 @@ import { isAdminEmail } from "@/lib/admin-emails";
 import {
   authenticateServerUser,
   getServerUserByEmail,
-  getServerUsers,
   patchServerUserOAuth,
   upsertServerUser,
 } from "@/lib/server-store";
@@ -78,26 +77,22 @@ export const authOptions = {
   callbacks: {
     async signIn({ user, account }) {
       if (user?.email) {
-        try {
-          const existing = getServerUserByEmail(user.email);
-          if (existing) {
-            patchServerUserOAuth(user.email, {
-              oauthName: user.name,
-              oauthImage: user.image,
-              provider: account?.provider,
-            });
-          } else {
-            upsertServerUser({
-              email: user.email,
-              name: user.name || user.email.split("@")[0],
-              image: user.image,
-              oauthName: user.name,
-              oauthImage: user.image,
-              provider: account?.provider,
-            });
-          }
-        } catch (e) {
-          console.error("signIn user store", e);
+        const existing = await getServerUserByEmail(user.email);
+        if (existing) {
+          await patchServerUserOAuth(user.email, {
+            oauthName: user.name,
+            oauthImage: user.image,
+            provider: account?.provider,
+          });
+        } else {
+          await upsertServerUser({
+            email: user.email,
+            name: user.name || user.email.split("@")[0],
+            image: user.image,
+            oauthName: user.name,
+            oauthImage: user.image,
+            provider: account?.provider,
+          });
         }
       }
       return true;
@@ -111,7 +106,7 @@ export const authOptions = {
       }
       const email = token.email;
       if (email) {
-        const row = getServerUsers().find((u) => String(u.email || "").toLowerCase() === String(email).toLowerCase());
+        const row = await getServerUserByEmail(email);
         if (row) {
           token.premium = Boolean(row.premium);
           token.admin = Boolean(row.admin || isAdminEmail(email));

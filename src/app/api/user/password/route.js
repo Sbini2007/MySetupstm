@@ -26,7 +26,7 @@ export async function POST(request) {
     );
   }
 
-  const user = getServerUserByEmail(email);
+  const user = await getServerUserByEmail(email);
   if (!user) {
     return NextResponse.json({ error: "Account non trovato." }, { status: 404 });
   }

@@ -50,10 +50,6 @@ export default function Footer() {
 
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-600">
           <p>© 2026 MySetups. F1 2026 Season Validated.</p>
-          <div className="flex items-center gap-4">
-            <Link href="/support" className="hover:text-violet-300 transition">Supporto</Link>
-            <Link href="/admin/login" className="hover:text-violet-300 transition">Staff</Link>
-          </div>
         </div>
       </div>
     </footer>

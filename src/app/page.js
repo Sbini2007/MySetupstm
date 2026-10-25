@@ -81,7 +81,7 @@ export default function HomePage() {
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
               <Link
                 href="/setups"
-                className="home-explore-button inline-flex items-center gap-2 rounded-none border border-violet-300/40 bg-[#a78bfa] px-6 py-3 text-xs font-bold text-white shadow-md shadow-black/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090a12] sm:text-sm"
+                className="home-explore-button inline-flex items-center gap-2 rounded-none border border-[#8b5cf6] bg-[#8b5cf6] px-6 py-3 text-xs font-bold text-white shadow-md shadow-black/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8b5cf6] focus-visible:ring-offset-2 focus-visible:ring-offset-[#090a12] sm:text-sm"
               >
                 <span>Esplora i Setup</span>
                 <ArrowRight size={14} />
@@ -170,9 +170,9 @@ export default function HomePage() {
 
         {/* ================= INTEGRAZIONE COMMUNITY DISCORD ================= */}
         <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
-          <div className="rounded-3xl border border-violet-400/[0.14] bg-gradient-to-br from-[#17132a] via-[#0d0d18] to-[#08090f] p-8 sm:p-12 shadow-2xl shadow-violet-950/15 relative overflow-hidden">
-            <div className="pointer-events-none absolute -right-24 -top-28 h-72 w-72 rounded-full bg-violet-600/10 blur-3xl" />
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+          <div className="relative py-5 sm:py-6">
+            <div className="mb-6 h-px bg-gradient-to-r from-transparent via-violet-500 to-transparent shadow-[0_0_3px_rgba(82,39,255,0.55)]" aria-hidden="true" />
+            <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
               <div className="max-w-xl">
                 <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
                   Entra nel Discord di MySetups
