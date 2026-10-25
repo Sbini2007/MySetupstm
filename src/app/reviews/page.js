@@ -40,7 +40,9 @@ export default function ReviewsPage() {
                   "{rev.text}"
                 </p>
               </div>
-              <div aria-hidden="true" className="mt-6 border-t border-white/[0.08]" />
+              <div className="mt-6 border-t border-white/[0.08] pt-3">
+                <p className="text-xs font-semibold text-white">{rev.driver}</p>
+              </div>
             </div>
           ))}
         </div>

@@ -184,6 +184,7 @@ export default function HomePage() {
                     “{review.text}”
                   </p>
                   <div aria-hidden="true" className="mt-5 border-t border-white/[0.08]" />
+                  <p className="mt-3 text-xs font-semibold text-white">{review.driver}</p>
                 </div>
               </article>
             ))}
