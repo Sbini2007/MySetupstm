@@ -1,16 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import Image from "next/image";
-import {
-  Search,
-  ArrowRight,
-  LayoutGrid,
-  ListFilter,
-  ShieldCheck,
-  Zap,
-  Lock
-} from "lucide-react";
+import { Search } from "lucide-react";
 import NavBar from "@/components/NavBar";
 import Footer from "@/components/Footer";
 import SetupDisplay from "@/components/SetupDisplay";
@@ -20,9 +11,7 @@ import { safeFetchJson } from "@/lib/safe-json";
 
 export default function SetupsPage() {
   const [search, setSearch] = useState("");
-  const [filterType, setFilterType] = useState("all");
   const [selectedSlug, setSelectedSlug] = useState("italy-monza");
-  const [viewMode, setViewMode] = useState("split"); // "split" | "grid"
   const [setupData, setSetupData] = useState(null);
   const [isAuthorized, setIsAuthorized] = useState(null);
   const [loadingSetup, setLoadingSetup] = useState(false);
@@ -66,32 +55,9 @@ export default function SetupsPage() {
         track.country.toLowerCase().includes(q) ||
         track.type?.toLowerCase().includes(q);
 
-      const matchType =
-        filterType === "all" ||
-        (filterType === "speed" &&
-          (track.slug === "italy-monza" ||
-            track.slug === "belgium" ||
-            track.slug === "saudi-arabia" ||
-            track.slug === "usa-las-vegas" ||
-            track.slug === "azerbaijan")) ||
-        (filterType === "street" &&
-          (track.slug === "monaco" ||
-            track.slug === "singapore" ||
-            track.slug === "azerbaijan" ||
-            track.slug === "usa-miami" ||
-            track.slug === "usa-las-vegas" ||
-            track.type?.toLowerCase().includes("cittadino"))) ||
-        (filterType === "downforce" &&
-          (track.slug === "monaco" ||
-            track.slug === "hungary" ||
-            track.slug === "singapore" ||
-            track.slug === "japan" ||
-            track.slug === "netherlands" ||
-            track.slug === "qatar"));
-
-      return matchSearch && matchType;
+      return matchSearch;
     });
-  }, [search, filterType]);
+  }, [search]);
 
   // Selected track data
   const selectedTrack = useMemo(() => {
@@ -142,33 +108,6 @@ export default function SetupsPage() {
                 </p>
               </div>
 
-              {/* View Switcher */}
-              <div className="flex items-center gap-1 rounded-xl border border-white/15 bg-[#0c0d15] p-1 self-start md:self-auto shrink-0 shadow-inner">
-                <button
-                  type="button"
-                  onClick={() => setViewMode("split")}
-                  className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
-                    viewMode === "split"
-                      ? "bg-white text-black shadow-sm"
-                      : "text-zinc-400 hover:text-white"
-                  }`}
-                >
-                  <ListFilter size={13} />
-                  <span>Lista</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewMode("grid")}
-                  className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
-                    viewMode === "grid"
-                      ? "bg-white text-black shadow-sm"
-                      : "text-zinc-400 hover:text-white"
-                  }`}
-                >
-                  <LayoutGrid size={13} />
-                  <span>Griglia</span>
-                </button>
-              </div>
             </div>
           </div>
         </section>
@@ -188,122 +127,47 @@ export default function SetupsPage() {
               />
             </div>
 
-            <div className="flex flex-wrap items-center gap-1.5">
-              {[
-                { id: "all", label: `Tutti (${tracks.length})` },
-                { id: "speed", label: "Top Speed & DRS" },
-                { id: "street", label: "Cittadini" },
-                { id: "downforce", label: "Alto Carico" },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setFilterType(tab.id)}
-                  className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition ${
-                    filterType === tab.id
-                      ? "bg-white text-black shadow-md"
-                      : "border border-white/[0.08] bg-[#0c0d15]/60 text-zinc-400 hover:border-white/20 hover:text-white"
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
           </div>
 
-          {viewMode === "split" ? (
-            /* Split View: Left AnimatedList, Right Full Setup Display */
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-              {/* Left Column: AnimatedList */}
-              <div className="lg:col-span-5 flex flex-col gap-2">
-                <div className="flex items-center justify-between px-1 text-xs text-zinc-400 pb-1">
-                  <span className="font-semibold text-zinc-300">
-                    Seleziona circuito ({filteredTracks.length})
-                  </span>
-                  <span className="text-[11px] font-mono text-zinc-500 hidden sm:inline">
-                    ↑ ↓ frecce tastiera
-                  </span>
-                </div>
-
-                <AnimatedList
-                  items={animatedItems}
-                  selectedId={selectedSlug}
-                  onItemSelect={(item) => {
-                    setSelectedSlug(item.slug);
-                  }}
-                  theme="dark"
-                  width="100%"
-                  maxHeight={620}
-                  radius={16}
-                  frame={true}
-                  displayScrollbar={true}
-                  enableArrowNavigation={true}
-                />
+          {/* Lista dei circuiti e dettaglio assetto */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            {/* Left Column: AnimatedList */}
+            <div className="lg:col-span-5 flex flex-col gap-2">
+              <div className="flex items-center justify-between px-1 text-xs text-zinc-400 pb-1">
+                <span className="font-semibold text-zinc-300">
+                  Seleziona circuito ({filteredTracks.length})
+                </span>
+                <span className="text-[11px] font-mono text-zinc-500 hidden sm:inline">
+                  ↑ ↓ frecce tastiera
+                </span>
               </div>
 
-              {/* Right Column: Full Setup Display Sheet */}
-              <div className="lg:col-span-7">
-                <SetupDisplay
-                  setup={setupData}
-                  isAuthorized={isAuthorized}
-                  trackName={selectedTrack.circuit}
-                  slug={selectedTrack.slug}
-                  track={selectedTrack}
-                />
-              </div>
+              <AnimatedList
+                items={animatedItems}
+                selectedId={selectedSlug}
+                onItemSelect={(item) => {
+                  setSelectedSlug(item.slug);
+                }}
+                theme="dark"
+                width="100%"
+                maxHeight={620}
+                radius={16}
+                frame={true}
+                displayScrollbar={true}
+                enableArrowNavigation={true}
+              />
             </div>
-          ) : (
-            /* Grid View: Clean & Minimal Cards with crisp borders */
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredTracks.map((track) => {
-                const trackIndex = tracks.findIndex((t) => t.slug === track.slug) + 1;
-                const isSelected = selectedSlug === track.slug;
-
-                return (
-                  <div
-                    key={track.slug}
-                    onClick={() => {
-                      setSelectedSlug(track.slug);
-                      setViewMode("split");
-                    }}
-                    className={`group cursor-pointer rounded-2xl border p-5 transition duration-200 ${
-                      isSelected
-                        ? "border-white/30 bg-white/[0.06] shadow-lg"
-                        : "border-white/[0.08] bg-[#0c0d15]/80 hover:border-white/20 hover:bg-[#10111d]"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="relative h-5 w-8 shrink-0 overflow-hidden rounded-[2px] border border-white/10 bg-black/40">
-                        <Image
-                          src={`/flags/${track.flagCode}.svg`}
-                          alt=""
-                          width={32}
-                          height={20}
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                      <div>
-                        <span className="text-[10px] font-mono text-zinc-400 font-bold block">
-                          ROUND {String(trackIndex).padStart(2, "0")} · {track.country.toUpperCase()}
-                        </span>
-                        <h3 className="font-bold text-white text-sm group-hover:text-zinc-200 transition">
-                          {track.circuit}
-                        </h3>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 flex items-center justify-between border-t border-white/[0.06] pt-3 text-xs">
-                      <span className="text-zinc-500 text-[11px]">{track.type}</span>
-                      <span className="inline-flex items-center gap-1 text-zinc-300 font-semibold text-xs group-hover:text-white group-hover:translate-x-0.5 transition">
-                        <span>Vedi Assetto</span>
-                        <ArrowRight size={13} />
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
+            {/* Right Column: Full Setup Display Sheet */}
+            <div className="lg:col-span-7">
+              <SetupDisplay
+                setup={setupData}
+                isAuthorized={isAuthorized}
+                trackName={selectedTrack.circuit}
+                slug={selectedTrack.slug}
+                track={selectedTrack}
+              />
             </div>
-          )}
+          </div>
 
           {filteredTracks.length === 0 && (
             <div className="mt-12 rounded-2xl border border-white/[0.06] bg-white/[0.01] p-12 text-center text-xs text-zinc-500">

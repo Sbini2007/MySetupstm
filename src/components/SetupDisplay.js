@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Image from "next/image";
-import { ArrowLeft, Check, Copy, Lock } from "lucide-react";
+import { ArrowLeft, Lock } from "lucide-react";
 import { PARAM_LIMITS, SETUP_TABS, tabToPrefix } from "@/lib/setup-sections";
 import { tracks } from "@/lib/data";
 
@@ -15,7 +15,6 @@ export default function SetupDisplay({
   track,
 }) {
   const [activeTab, setActiveTab] = useState("race");
-  const [copied, setCopied] = useState(false);
 
   const currentTrack = useMemo(() => {
     if (track) return track;
@@ -112,23 +111,6 @@ export default function SetupDisplay({
     },
   ];
 
-  const currentTab = SETUP_TABS.find((tab) => tab.key === activeTab) || SETUP_TABS[0];
-
-  const copySetup = async () => {
-    const text = [
-      `MYSETUPS - ${currentTrack.circuit} (${currentTrack.country}) - ${currentTab.label}`,
-      ...parameterSections.flatMap((section) => [
-        `\n${section.title}:`,
-        ...section.rows.map(({ label, value: rowValue, unit = "" }) => `- ${label}: ${rowValue}${unit}`),
-      ]),
-    ].join("\n");
-
-    if (!navigator.clipboard?.writeText) return;
-    await navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
@@ -159,14 +141,6 @@ export default function SetupDisplay({
             <h2 className="text-lg font-black tracking-tight text-white">{currentTrack.circuit}</h2>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={copySetup}
-          className="inline-flex items-center gap-2 text-xs font-semibold text-zinc-300 transition hover:text-violet-300"
-        >
-          {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
-          <span>{copied ? "Copiato" : "Copia assetto"}</span>
-        </button>
       </div>
 
       <div className="grid grid-cols-3 border-y border-white/10">
