@@ -6,7 +6,6 @@ import Link from "next/link";
 import Image from "next/image";
 import {
   X,
-  LogOut,
   ArrowUpRight,
   Home,
   Sliders,
@@ -17,7 +16,7 @@ import { useAuth } from "@/lib/client-auth";
 import "./StaggeredMenu.css";
 
 export default function NavBar() {
-  const { user, isAdmin, logout } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -124,20 +123,8 @@ export default function NavBar() {
 
           {/* Right Action Buttons */}
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* Desktop Account Badge / Logout */}
-            {mounted && user ? (
-              <div className="hidden sm:flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={logout}
-                  title="Esci"
-                  className="p-2 text-zinc-400 hover:text-white transition cursor-pointer"
-                  aria-label="Esci"
-                >
-                  <LogOut size={14} />
-                </button>
-              </div>
-            ) : mounted ? (
+            {/* Desktop Account Action */}
+            {mounted && !user ? (
               <div className="hidden sm:flex items-center gap-2">
                 <Link
                   href="/login?mode=register"
