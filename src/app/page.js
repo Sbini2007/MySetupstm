@@ -178,9 +178,9 @@ export default function HomePage() {
                 />
                 <div className="relative flex h-full flex-1 flex-col">
                   <div className="flex items-center justify-between">
-                    <div className="flex gap-1 text-amber-400" aria-label="5 stelle su 5">
+                    <div className="flex gap-1 text-violet-400" aria-label="Valutazione">
                       {Array.from({ length: 5 }, (_, index) => (
-                        <Star key={index} size={12} fill="currentColor" />
+                        <Star key={index} size={12} fill="none" strokeWidth={1.7} />
                       ))}
                     </div>
                     <Quote size={17} className="text-violet-300/70" aria-hidden="true" />
@@ -189,11 +189,7 @@ export default function HomePage() {
                     “{review.text}”
                   </p>
                   <div className="mt-5 border-t border-white/[0.08] pt-3">
-                    <p className="text-xs font-semibold text-white">{review.driver}</p>
-                    <div className="mt-1 flex flex-wrap items-center justify-between gap-1 text-[10px] text-zinc-500">
-                      <span>{review.role}</span>
-                      <span>{review.track}</span>
-                    </div>
+                    <p className="text-[10px] font-mono uppercase tracking-wider text-violet-300/80">{review.track}</p>
                   </div>
                 </div>
               </article>

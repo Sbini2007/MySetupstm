@@ -30,9 +30,9 @@ export default function ReviewsPage() {
               className="flex flex-col justify-between rounded-xl border border-white/[0.08] bg-[#0c0c10] p-6"
             >
               <div>
-                <div className="flex gap-1 text-amber-400">
+                <div className="flex gap-1 text-violet-400" aria-label="Valutazione">
                   {Array.from({ length: 5 }).map((_, i) => (
-                    <Star key={i} size={14} fill="currentColor" />
+                    <Star key={i} size={14} fill="none" strokeWidth={1.7} />
                   ))}
                 </div>
 
@@ -42,11 +42,7 @@ export default function ReviewsPage() {
               </div>
 
               <div className="mt-6 border-t border-white/[0.05] pt-3 flex items-center justify-between text-xs">
-                <div>
-                  <span className="font-semibold text-white block">{rev.driver}</span>
-                  <span className="text-[11px] text-zinc-500">{rev.role}</span>
-                </div>
-                <span className="text-[11px] text-zinc-500">{rev.track}</span>
+                <span className="text-[11px] font-mono uppercase tracking-wider text-violet-300/80">{rev.track}</span>
               </div>
             </div>
           ))}
