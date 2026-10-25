@@ -96,6 +96,7 @@ export default function AdminSetupEditor() {
       window.dispatchEvent(
         new CustomEvent("mysetups_setup_updated", { detail: { slug: selectedSlug } })
       );
+      localStorage.setItem("mysetups_last_updated", String(Date.now()));
     } catch {
       setErrorMsg("Errore di connessione durante il salvataggio.");
     } finally {

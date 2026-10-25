@@ -7,7 +7,6 @@ import {
   ArrowRight,
   Check,
   ArrowUpRight,
-  Clock,
   MessageSquare,
   Users,
 } from "lucide-react";
@@ -19,11 +18,29 @@ import { safeFetchJson } from "@/lib/safe-json";
 export default function HomePage() {
   const [latestUpdate, setLatestUpdate] = useState(null);
 
-  // Fetch latest track update dynamically
+  // Refresh latest setup on load and after admin saves in another tab.
   useEffect(() => {
-    safeFetchJson("/api/setups/latest", { cache: "no-store" }).then((d) => {
-      if (d?.track) setLatestUpdate(d.track);
-    });
+    const refreshLatestUpdate = () => {
+      safeFetchJson("/api/setups/latest", { cache: "no-store" }).then((data) => {
+        if (data?.track) setLatestUpdate(data.track);
+      });
+    };
+    const handleStorage = (event) => {
+      if (event.key === "mysetups_last_updated") refreshLatestUpdate();
+    };
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") refreshLatestUpdate();
+    };
+
+    refreshLatestUpdate();
+    window.addEventListener("mysetups_setup_updated", refreshLatestUpdate);
+    window.addEventListener("storage", handleStorage);
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => {
+      window.removeEventListener("mysetups_setup_updated", refreshLatestUpdate);
+      window.removeEventListener("storage", handleStorage);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
   }, []);
 
   const formattedUpdateDate = useMemo(() => {
@@ -113,10 +130,6 @@ export default function HomePage() {
 
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <span                       className="inline-flex items-center gap-1.5 rounded-md border border-violet-400/20 bg-violet-500/[0.06] px-2.5 py-0.5 font-mono text-[10px] font-bold text-zinc-300 uppercase">
-                        <Clock size={11} className="text-violet-300" />
-                        ULTIMO AGGIORNAMENTO F1 26
-                      </span>
                       <span className="font-mono text-xs text-zinc-400">
                         {formattedUpdateDate}
                       </span>
@@ -125,14 +138,6 @@ export default function HomePage() {
                     <h3 className="text-lg sm:text-xl font-bold text-white mt-1">
                       {latestUpdate.circuit} ({latestUpdate.country})
                     </h3>
-
-                    <p className="text-xs text-zinc-400 font-medium mt-0.5">
-                      Variazione modificata: <strong className="text-zinc-200">{latestUpdate.variation}</strong>
-                    </p>
-
-                    <p className="mt-1.5 text-xs text-zinc-400 max-w-2xl leading-relaxed">
-                      "{latestUpdate.notes}"
-                    </p>
                   </div>
                 </div>
 

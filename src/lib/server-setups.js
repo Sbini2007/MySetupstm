@@ -96,7 +96,7 @@ export function saveTrackSetupFlat(slug, flat) {
   if (flat.latest_variation) {
     nextData.latest_variation = flat.latest_variation;
   }
-  all[slug] = attachUpdatedAt(nextData);
+  all[slug] = attachUpdatedAt({ ...nextData, updatedAt: new Date().toISOString() });
   writeFile(all);
   return all[slug];
 }
