@@ -75,9 +75,6 @@ export default function SetupsPage() {
   // Clean items formatted for AnimatedList
   const animatedItems = useMemo(() => {
     return filteredTracks.map((t) => {
-      const origIdx = tracks.findIndex((orig) => orig.slug === t.slug);
-      const round = `R${String(origIdx + 1).padStart(2, "0")}`;
-
       return {
         id: t.slug,
         slug: t.slug,
@@ -85,7 +82,6 @@ export default function SetupsPage() {
         description: t.country,
         meta: t.type,
         flagCode: t.flagCode,
-        round: round,
       };
     });
   }, [filteredTracks]);
