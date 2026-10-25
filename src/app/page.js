@@ -152,8 +152,7 @@ export default function HomePage() {
                 </h2>
 
                 <p className="mt-3 text-xs sm:text-sm text-zinc-400 leading-relaxed">
-                  Confrontati direttamente con i nostri ingegneri di pista e i piloti di lega.
-                  Ricevi notifiche in tempo reale al rilascio di nuovi assetti dopo ogni patch ufficiale di F1 26, canali telemetria dedicati per ogni GP e assistenza su volanti Direct Drive e Gamepad.
+                  Confrontati direttamente con i nostri piloti. Ricevi notifiche in tempo reale al rilascio di nuovi assetti dopo ogni patch ufficiale di F1 26 e assistenza sui setup in caso di necessità.
                 </p>
               </div>
 
