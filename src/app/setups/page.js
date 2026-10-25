@@ -94,7 +94,7 @@ export default function SetupsPage() {
         <NavBar />
 
         {/* Minimal Clean Header with Subtle Glassmorphism Fumé */}
-        <section className="border-b border-white/[0.06] bg-[#0c0d15]/50 px-4 pt-24 pb-8 sm:px-6 lg:px-8">
+        <section className="border-b border-white/[0.06] bg-[#0c0d15]/50 px-4 pt-28 pb-8 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-6xl">
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
               <div>
