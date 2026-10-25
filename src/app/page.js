@@ -133,7 +133,7 @@ export default function HomePage() {
         <NavBar />
 
         {/* ================= HERO SECTION (IMPATTO, ACCOGLIENTE CON LOGO AL CENTRO) ================= */}
-        <section className="relative px-4 pt-24 pb-14 sm:px-6 lg:px-8 text-center max-w-5xl mx-auto overflow-hidden">
+        <section className="relative px-4 pt-32 pb-14 sm:px-6 sm:pt-36 lg:px-8 text-center max-w-5xl mx-auto overflow-hidden">
           {/* Hero Background Atmosphere */}
           <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
             <Image
