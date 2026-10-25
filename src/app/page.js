@@ -5,9 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
-  Check,
   ArrowUpRight,
-  MessageSquare,
   Users,
 } from "lucide-react";
 import NavBar from "@/components/NavBar";
@@ -161,11 +159,6 @@ export default function HomePage() {
             <div className="pointer-events-none absolute -right-24 -top-28 h-72 w-72 rounded-full bg-violet-600/10 blur-3xl" />
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
               <div className="max-w-xl">
-                <div className="inline-flex items-center gap-2 rounded-full border border-violet-400/20 bg-violet-500/[0.06] px-3.5 py-1 text-xs font-mono font-semibold text-zinc-300 mb-3">
-                  <MessageSquare size={13} className="text-violet-300" />
-                  <span>COMMUNITY UFFICIALE MYSETUPS</span>
-                </div>
-
                 <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
                   Entra nel Discord Ufficiale di F1 26
                 </h2>
@@ -174,17 +167,6 @@ export default function HomePage() {
                   Confrontati direttamente con i nostri ingegneri di pista e i piloti di lega.
                   Ricevi notifiche in tempo reale al rilascio di nuovi assetti dopo ogni patch ufficiale di F1 26, canali telemetria dedicati per ogni GP e assistenza su volanti Direct Drive e Gamepad.
                 </p>
-
-                <div className="mt-6 flex flex-wrap gap-4 text-xs text-zinc-400 font-mono">
-                  <div className="flex items-center gap-1.5">
-                    <Check size={14} className="text-emerald-400" />
-                    <span>Canali per tutti i 25 circuiti</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Check size={14} className="text-emerald-400" />
-                    <span>Aggiornamenti Post-Patch</span>
-                  </div>
-                </div>
               </div>
 
               <div className="shrink-0 flex flex-col items-start sm:items-center gap-3">
