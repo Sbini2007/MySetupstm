@@ -96,8 +96,8 @@ export default function AdminSetupEditor() {
   if (!currentTrack) return null;
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="space-y-3">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <Image
             src={`/flags/${currentTrack.flagCode}.svg`}
@@ -145,7 +145,7 @@ export default function AdminSetupEditor() {
         </p>
       )}
 
-      <div className="flex gap-4 border-b border-white/10">
+      <div className="flex gap-3 border-b border-white/10">
         {SETUP_TABS.map((tab) => (
           <button
             key={tab.key}
@@ -162,27 +162,30 @@ export default function AdminSetupEditor() {
         ))}
       </div>
 
-      <div className="divide-y divide-white/10">
+      <div className="space-y-3">
         {SETUP_SECTIONS.map((section) => (
-          <section key={section.title} className="py-3 first:pt-0">
-            <h3 className="mb-2.5 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+          <section
+            key={section.title}
+            className="border-t border-white/10 pt-3 first:border-0 first:pt-0"
+          >
+            <h3 className="mb-2 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
               {section.title}
             </h3>
-            <div className="grid grid-cols-1 gap-x-8 gap-y-3 md:grid-cols-2">
+            <div className="space-y-2">
               {section.fields.map((field) => {
                 const value = getParamValue(field.suffix, field.default);
                 return (
-                  <div key={field.suffix} className="space-y-0.5">
+                  <div key={field.suffix} className="space-y-0">
                     <div className="flex items-center justify-between gap-4">
                       <label
                         htmlFor={`setup-${field.suffix}`}
-                        className="truncate text-xs text-zinc-300"
+                        className="truncate text-[11px] text-zinc-300"
                       >
                         {field.label}
                       </label>
                       <output
                         htmlFor={`setup-${field.suffix}`}
-                        className="shrink-0 text-right font-mono text-xs font-semibold tabular-nums text-white"
+                        className="shrink-0 text-right font-mono text-[11px] font-semibold tabular-nums text-white"
                       >
                         {value}{field.unit}
                       </output>
@@ -195,7 +198,7 @@ export default function AdminSetupEditor() {
                       step={field.step}
                       value={value}
                       onChange={(event) => setParamValue(field.suffix, event.target.value)}
-                      className="h-3 w-full cursor-pointer accent-violet-400"
+                      className="h-2 w-full cursor-pointer accent-violet-400"
                     />
                   </div>
                 );
