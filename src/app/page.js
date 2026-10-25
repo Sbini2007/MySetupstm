@@ -6,12 +6,15 @@ import Link from "next/link";
 import {
   ArrowRight,
   ArrowUpRight,
+  Quote,
+  Star,
   Users,
 } from "lucide-react";
 import NavBar from "@/components/NavBar";
 import Footer from "@/components/Footer";
 import TextType from "@/components/TextType";
 import { safeFetchJson } from "@/lib/safe-json";
+import { detailedReviews } from "@/lib/reviews";
 
 export default function HomePage() {
   const [latestUpdate, setLatestUpdate] = useState(null);
@@ -140,6 +143,51 @@ export default function HomePage() {
             </div>
           </section>
         )}
+
+        {/* ================= FEEDBACK DEI PILOTI ================= */}
+        <section className="mx-auto max-w-6xl px-4 pb-4 pt-8 sm:px-6 lg:px-8">
+          <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <span className="text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-violet-300">
+                Feedback community
+              </span>
+              <h2 className="mt-1 text-2xl font-black tracking-tight text-white sm:text-3xl">
+                Le impressioni dei piloti
+              </h2>
+            </div>
+            <p className="max-w-md text-xs leading-relaxed text-zinc-400">
+              Esperienze e commenti di chi ha provato i nostri assetti in pista.
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {detailedReviews.map((review) => (
+              <article
+                key={review.driver}
+                className="flex min-h-56 flex-col rounded-2xl border border-white/[0.08] bg-[#0c0d15] p-5 transition-colors duration-200 hover:border-violet-400/25"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex gap-1 text-amber-400" aria-label="5 stelle su 5">
+                    {Array.from({ length: 5 }, (_, index) => (
+                      <Star key={index} size={12} fill="currentColor" />
+                    ))}
+                  </div>
+                  <Quote size={16} className="text-violet-300/60" aria-hidden="true" />
+                </div>
+                <p className="mt-4 flex-1 text-xs leading-relaxed text-zinc-300">
+                  “{review.text}”
+                </p>
+                <div className="mt-5 border-t border-white/[0.07] pt-3">
+                  <p className="text-xs font-semibold text-white">{review.driver}</p>
+                  <div className="mt-1 flex flex-wrap items-center justify-between gap-1 text-[10px] text-zinc-500">
+                    <span>{review.role}</span>
+                    <span>{review.track}</span>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
 
         {/* ================= INTEGRAZIONE COMMUNITY DISCORD ================= */}
         <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
