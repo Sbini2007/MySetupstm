@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { Search } from "lucide-react";
 import NavBar from "@/components/NavBar";
 import Footer from "@/components/Footer";
@@ -12,38 +12,40 @@ import { safeFetchJson } from "@/lib/safe-json";
 export default function SetupsPage() {
   const [search, setSearch] = useState("");
   const [selectedSlug, setSelectedSlug] = useState("italy-monza");
-  const [setupData, setSetupData] = useState(null);
+  const [setupsBySlug, setSetupsBySlug] = useState({});
   const [isAuthorized, setIsAuthorized] = useState(null);
-  const [loadingSetup, setLoadingSetup] = useState(false);
+  const [setupError, setSetupError] = useState(false);
+  const setupRequestId = useRef(0);
 
-  // Instant local setup + background sync & live admin sync
+  const fetchSetups = useCallback(async () => {
+    const requestId = ++setupRequestId.current;
+    setSetupError(false);
+    const data = await safeFetchJson("/api/setups", { cache: "no-store" });
+    if (requestId !== setupRequestId.current) return;
+    if (!data) {
+      setSetupError(true);
+      return;
+    }
+    setIsAuthorized(Boolean(data.isAuthorized));
+    setSetupsBySlug(data.isAuthorized ? data.setups || {} : {});
+  }, []);
+
+  // Load authorized setups once so selecting a circuit only changes local state.
   useEffect(() => {
-    if (!selectedSlug) return;
-    setSetupData(null);
-    setIsAuthorized(null);
-    const fetchSetup = () => {
-      safeFetchJson(`/api/setups/${selectedSlug}`, { cache: "no-store" }).then((data) => {
-        if (data) {
-          setIsAuthorized(data.isAuthorized);
-          setSetupData(data.isAuthorized ? data.setup : null);
-        }
-      });
-    };
+    fetchSetups();
 
-    fetchSetup();
-
-    const onUpdate = (e) => {
-      if (!e?.detail?.slug || e.detail.slug === selectedSlug) {
-        fetchSetup();
-      }
+    const onUpdate = () => fetchSetups();
+    const onStorage = (e) => {
+      if (e.key === "mysetups_last_updated") fetchSetups();
     };
     window.addEventListener("mysetups_setup_updated", onUpdate);
-    window.addEventListener("storage", fetchSetup);
+    window.addEventListener("storage", onStorage);
     return () => {
+      setupRequestId.current += 1;
       window.removeEventListener("mysetups_setup_updated", onUpdate);
-      window.removeEventListener("storage", fetchSetup);
+      window.removeEventListener("storage", onStorage);
     };
-  }, [selectedSlug]);
+  }, [fetchSetups]);
 
   // Filtered tracks list
   const filteredTracks = useMemo(() => {
@@ -151,8 +153,10 @@ export default function SetupsPage() {
             {/* Right Column: Full Setup Display Sheet */}
             <div className="lg:col-span-7">
               <SetupDisplay
-                setup={setupData}
+                setup={setupsBySlug[selectedSlug] || null}
                 isAuthorized={isAuthorized}
+                loadError={setupError}
+                onRetry={fetchSetups}
                 trackName={selectedTrack.circuit}
                 slug={selectedTrack.slug}
                 track={selectedTrack}

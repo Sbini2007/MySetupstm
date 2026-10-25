@@ -9,6 +9,8 @@ import { tracks } from "@/lib/data";
 export default function SetupDisplay({
   setup,
   isAuthorized = true,
+  loadError = false,
+  onRetry,
   onBack,
   trackName = "Circuito",
   slug = "italy-monza",
@@ -37,6 +39,25 @@ export default function SetupDisplay({
         <Lock size={20} className="mx-auto text-zinc-500" />
         <h2 className="mt-3 text-sm font-bold uppercase tracking-wide text-white">Accesso riservato</h2>
         <p className="mt-1 text-xs text-zinc-400">Contatta lo staff per richiedere l'accesso a questi setup.</p>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="flex min-h-40 flex-col items-center justify-center gap-3 border-y border-white/10">
+        <p role="alert" className="text-xs text-zinc-400">
+          Impossibile caricare i setup. Controlla la connessione e riprova.
+        </p>
+        {onRetry && (
+          <button
+            type="button"
+            onClick={onRetry}
+            className="text-xs font-semibold text-violet-300 transition hover:text-white"
+          >
+            Riprova
+          </button>
+        )}
       </div>
     );
   }
