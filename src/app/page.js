@@ -147,14 +147,9 @@ export default function HomePage() {
         {/* ================= FEEDBACK DEI PILOTI ================= */}
         <section className="mx-auto max-w-6xl px-4 pb-4 pt-8 sm:px-6 lg:px-8">
           <div className="mb-5">
-            <div>
-              <span className="text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-violet-300">
-                Feedback community
-              </span>
-              <h2 className="mt-1 text-xl font-black tracking-tight text-white sm:text-2xl">
-                Le impressioni dei piloti
-              </h2>
-            </div>
+            <h2 className="text-xl font-black tracking-tight text-white sm:text-2xl">
+              Feedback dei Piloti
+            </h2>
           </div>
 
           <div className="grid auto-cols-[minmax(260px,1fr)] grid-flow-col gap-3 overflow-x-auto pb-3 xl:auto-cols-auto xl:grid-flow-row xl:grid-cols-4 xl:overflow-visible">
