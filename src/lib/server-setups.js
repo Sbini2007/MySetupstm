@@ -146,7 +146,7 @@ export function createTrackSetup(slug, customData = {}) {
 }
 
 export function getLatestTrackUpdate() {
-  const all = getAllTrackSetups();
+  const all = readFile();
   let latest = null;
 
   for (const [slug, setup] of Object.entries(all || {})) {
@@ -179,7 +179,7 @@ export function getLatestTrackUpdate() {
     country: track.country || "World",
     flagCode: track.flagCode || "it",
     round: `R${String(trackIndex > 0 ? trackIndex : 1).padStart(2, "0")}`,
-    updatedAt: latest?.updatedAt || new Date().toISOString(),
+    updatedAt: latest?.updatedAt || setup.updatedAt || new Date().toISOString(),
     notes,
     variation,
   };
