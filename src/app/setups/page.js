@@ -129,13 +129,8 @@ export default function SetupsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             {/* Left Column: AnimatedList */}
             <div className="lg:col-span-5 flex flex-col gap-2">
-              <div className="flex items-center justify-between px-1 text-xs text-zinc-400 pb-1">
-                <span className="font-semibold text-zinc-300">
-                  Seleziona circuito ({filteredTracks.length})
-                </span>
-                <span className="text-[11px] font-mono text-zinc-500 hidden sm:inline">
-                  ↑ ↓ frecce tastiera
-                </span>
+              <div className="px-1 pb-1 text-xs text-zinc-300">
+                <span className="font-semibold">Seleziona circuito</span>
               </div>
 
               <AnimatedList
