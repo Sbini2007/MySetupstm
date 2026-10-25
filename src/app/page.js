@@ -188,6 +188,7 @@ export default function HomePage() {
                   <p className="mt-5 flex-1 text-xs leading-relaxed text-zinc-300 sm:text-[13px]">
                     “{review.text}”
                   </p>
+                  <div aria-hidden="true" className="mt-5 border-t border-white/[0.08]" />
                 </div>
               </article>
             ))}

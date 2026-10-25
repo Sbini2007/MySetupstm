@@ -40,7 +40,7 @@ export default function ReviewsPage() {
                   "{rev.text}"
                 </p>
               </div>
-
+              <div aria-hidden="true" className="mt-6 border-t border-white/[0.08]" />
             </div>
           ))}
         </div>
