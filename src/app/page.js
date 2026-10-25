@@ -7,7 +7,6 @@ import {
   ArrowRight,
   ArrowUpRight,
   Quote,
-  Star,
   Users,
 } from "lucide-react";
 import NavBar from "@/components/NavBar";
@@ -103,40 +102,28 @@ export default function HomePage() {
         {latestUpdate && (
           <section className="mx-auto max-w-6xl px-4 pb-8 sm:px-6 lg:px-8">
             <div className="rounded-2xl border border-violet-400/[0.14] bg-gradient-to-br from-[#151226]/90 via-[#0c0d15]/90 to-[#0c0d15]/80 backdrop-blur-md p-5 sm:p-6 shadow-xl shadow-violet-950/10 relative overflow-hidden transition duration-200 hover:border-violet-400/25">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5">
-                <div className="flex items-start gap-4">
-                  {/* Flag */}
-                  <div className="relative h-12 w-16 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-black/40">
-                    <Image
-                      src={`/flags/${latestUpdate.flagCode}.svg`}
-                      alt=""
-                      width={48}
-                      height={32}
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-mono text-xs text-zinc-400">
-                        {formattedUpdateDate}
-                      </span>
-                    </div>
-
-                    <h3 className="text-lg sm:text-xl font-bold text-white mt-1">
-                      {latestUpdate.circuit} ({latestUpdate.country})
-                    </h3>
-                  </div>
+              <div className="flex items-start gap-4">
+                {/* Flag */}
+                <div className="relative h-12 w-16 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-black/40">
+                  <Image
+                    src={`/flags/${latestUpdate.flagCode}.svg`}
+                    alt=""
+                    width={48}
+                    height={32}
+                    className="h-full w-full object-cover"
+                  />
                 </div>
 
-                <div className="shrink-0 self-start md:self-center">
-                  <Link
-                    href="/setups"
-                    className="inline-flex items-center gap-2 rounded-xl border border-violet-300/20 bg-[#5a45b5] px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-black/20 transition-colors duration-200 hover:bg-[#6750c7] active:bg-[#4c3aa0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090a12]"
-                  >
-                    <span>Vedi Pista Aggiornata</span>
-                    <ArrowRight size={13} />
-                  </Link>
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-mono text-xs text-zinc-400">
+                      {formattedUpdateDate}
+                    </span>
+                  </div>
+
+                  <h3 className="text-lg sm:text-xl font-bold text-white mt-1">
+                    {latestUpdate.circuit} ({latestUpdate.country})
+                  </h3>
                 </div>
               </div>
             </div>
@@ -171,14 +158,7 @@ export default function HomePage() {
                   }}
                 />
                 <div className="relative flex h-full flex-1 flex-col">
-                  <div className="flex items-center justify-between">
-                    <div className="flex gap-1 text-violet-400" aria-label="Valutazione">
-                      {Array.from({ length: 5 }, (_, index) => (
-                        <Star key={index} size={12} fill="none" strokeWidth={1.7} />
-                      ))}
-                    </div>
-                    <Quote size={17} className="text-violet-300/70" aria-hidden="true" />
-                  </div>
+                  <Quote size={17} className="text-violet-300/70" aria-hidden="true" />
                   <p className="mt-5 flex-1 text-xs leading-relaxed text-zinc-300 sm:text-[13px]">
                     “{review.text}”
                   </p>

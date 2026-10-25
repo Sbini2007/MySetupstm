@@ -11,7 +11,7 @@ import { safeFetchJson } from "@/lib/safe-json";
 
 export default function SetupsPage() {
   const [search, setSearch] = useState("");
-  const [selectedSlug, setSelectedSlug] = useState("italy-monza");
+  const [selectedSlug, setSelectedSlug] = useState(null);
   const [setupsBySlug, setSetupsBySlug] = useState({});
   const [isAuthorized, setIsAuthorized] = useState(null);
   const [setupError, setSetupError] = useState(false);
@@ -61,18 +61,10 @@ export default function SetupsPage() {
     });
   }, [search]);
 
-  // Selected track data
-  const selectedTrack = useMemo(() => {
-    return (
-      tracks.find((t) => t.slug === selectedSlug) ||
-      filteredTracks[0] ||
-      tracks[0]
-    );
-  }, [selectedSlug, filteredTracks]);
-
-  const selectedTrackIndex = useMemo(() => {
-    return tracks.findIndex((t) => t.slug === selectedTrack.slug) + 1;
-  }, [selectedTrack]);
+  const selectedTrack = useMemo(
+    () => tracks.find((track) => track.slug === selectedSlug) || null,
+    [selectedSlug]
+  );
 
   // Clean items formatted for AnimatedList
   const animatedItems = useMemo(() => {
@@ -138,6 +130,7 @@ export default function SetupsPage() {
               <AnimatedList
                 items={animatedItems}
                 selectedId={selectedSlug}
+                initialSelectedIndex={-1}
                 onItemSelect={(item) => {
                   setSelectedSlug(item.slug);
                 }}
@@ -152,15 +145,23 @@ export default function SetupsPage() {
             </div>
             {/* Right Column: Full Setup Display Sheet */}
             <div className="lg:col-span-7">
-              <SetupDisplay
-                setup={setupsBySlug[selectedSlug] || null}
-                isAuthorized={isAuthorized}
-                loadError={setupError}
-                onRetry={fetchSetups}
-                trackName={selectedTrack.circuit}
-                slug={selectedTrack.slug}
-                track={selectedTrack}
-              />
+              {selectedTrack ? (
+                <SetupDisplay
+                  setup={setupsBySlug[selectedSlug] || null}
+                  isAuthorized={isAuthorized}
+                  loadError={setupError}
+                  onRetry={fetchSetups}
+                  trackName={selectedTrack.circuit}
+                  slug={selectedTrack.slug}
+                  track={selectedTrack}
+                />
+              ) : (
+                <div className="flex min-h-40 items-center justify-center border-y border-white/10 px-4 text-center">
+                  <p className="text-xs font-mono text-zinc-400">
+                    Seleziona un circuito dalla lista per visualizzare il setup.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 

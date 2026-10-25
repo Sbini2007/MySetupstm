@@ -1,6 +1,5 @@
 "use client";
 
-import { Star } from "lucide-react";
 import NavBar from "@/components/NavBar";
 import Footer from "@/components/Footer";
 import { detailedReviews } from "@/lib/reviews";
@@ -30,12 +29,6 @@ export default function ReviewsPage() {
               className="flex flex-col justify-between rounded-xl border border-white/[0.08] bg-[#0c0c10] p-6"
             >
               <div>
-                <div className="flex gap-1 text-violet-400" aria-label="Valutazione">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star key={i} size={14} fill="none" strokeWidth={1.7} />
-                  ))}
-                </div>
-
                 <p className="mt-4 text-xs sm:text-sm text-zinc-300 leading-relaxed">
                   "{rev.text}"
                 </p>
