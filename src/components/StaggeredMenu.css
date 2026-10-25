@@ -192,10 +192,10 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 0.65rem;
-  padding: 0.45rem 0.85rem;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
   color: #e4e4e7;
   font-size: 0.75rem;
   font-weight: 700;
@@ -206,9 +206,8 @@
 }
 
 .sm-panel-close-btn:hover {
-  background: rgba(255, 255, 255, 0.18);
+  background: transparent;
   color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.35);
   transform: translateY(-1px);
 }
 
@@ -268,6 +267,10 @@
 
 .sm-panel-item-3 {
   animation-delay: 0.47s;
+}
+
+.sm-panel-item-4 {
+  animation-delay: 0.54s;
 }
 
 .sm-panel-item:hover {

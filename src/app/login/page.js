@@ -6,7 +6,7 @@ import { Suspense, useEffect, useState } from "react";
 import logoImg from "@/assets/images/logo.png";
 import { signIn, useSession } from "@/lib/client-auth";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Lock, Sparkles, UserPlus, LogIn, Check, AlertCircle, ArrowRight, Shield } from "lucide-react";
+import { Lock, Sparkles, UserPlus, LogIn, Check, AlertCircle, ArrowRight } from "lucide-react";
 import NavBar from "@/components/NavBar";
 import Footer from "@/components/Footer";
 
@@ -253,19 +253,6 @@ function LoginInner() {
               )}
             </button>
           </form>
-
-          {/* Quick Admin Access */}
-          <div className="mt-4 pt-4 border-t border-white/[0.06]">
-            <button
-              type="button"
-              onClick={() => signIn("google", { callbackUrl: "/admin" })}
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-2 rounded-xl border border-amber-500/25 bg-amber-500/5 px-4 py-2.5 text-xs font-bold text-amber-300 transition hover:bg-amber-500/15"
-            >
-              <Shield size={13} />
-              <span>Verifica account staff con Google</span>
-            </button>
-          </div>
 
           {/* Social Logins Divider */}
           <div className="relative my-6 text-center">

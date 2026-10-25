@@ -17,7 +17,7 @@ import { useAuth } from "@/lib/client-auth";
 import "./StaggeredMenu.css";
 
 export default function NavBar() {
-  const { user, logout } = useAuth();
+  const { user, isAdmin, logout } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -68,7 +68,7 @@ export default function NavBar() {
     { label: "Setup", href: "/setups", isExternal: false },
     { label: "Discord", href: "https://discord.gg/YzVN3ncCwR", isExternal: true },
     { label: "Account", href: "/account", isExternal: false },
-    { label: "Admin", href: "/admin", isExternal: false },
+    ...(isAdmin ? [{ label: "Admin", href: "/admin", isExternal: false }] : []),
   ];
 
   return (
@@ -219,16 +219,13 @@ export default function NavBar() {
               {/* Top bar inside sliding panel */}
               <div className="sm-panel-topbar">
                 <div className="flex items-center gap-2.5">
-                  <div className="h-11 w-11 relative">
+                  <div className="h-14 w-14 relative">
                     <Image
                       src={logoImg}
                       alt="MySetups"
                       className="h-full w-full object-contain"
                     />
                   </div>
-                  <span className="font-sans text-xs font-black tracking-tight text-white uppercase">
-                    MySetups F1 26
-                  </span>
                 </div>
 
                 <button
@@ -244,7 +241,7 @@ export default function NavBar() {
 
               {/* Main Panel Content */}
               <div className="sm-panel-inner">
-                {/* 5 Main Items with Numbering */}
+                {/* Main Items with Numbering */}
                 <ul className="sm-panel-list" data-numbering>
                   {navItems.map((item, idx) => (
                     <li key={item.label} className="sm-panel-itemWrap">
@@ -285,15 +282,6 @@ export default function NavBar() {
                       >
                         Community Discord
                       </a>
-                    </li>
-                    <li className="sm-socials-item">
-                      <Link
-                        href="/admin"
-                        className="sm-socials-link"
-                        onClick={() => setMenuOpen(false)}
-                      >
-                        Pannello Admin
-                      </Link>
                     </li>
                   </ul>
                 </div>
