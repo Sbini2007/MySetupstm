@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-const WORDS = ["setup...", "ritmo", "bilanciamento", "tempo"];
+const WORDS = ["setup", "ritmo", "bilanciamento", "tempo"];
 const PREFIX = "Trova il tuo ";
 
 export default function TextType() {
