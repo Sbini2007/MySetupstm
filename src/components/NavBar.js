@@ -84,7 +84,7 @@ export default function NavBar() {
           {/* Brand Logo */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center gap-3 group">
-              <div className="relative h-20 w-20 transition-transform duration-200 group-hover:scale-105">
+              <div className="relative h-[5.5rem] w-[5.5rem] transition-transform duration-200 group-hover:scale-105">
                 <Image
                   src={logoImg}
                   alt="MySetups"

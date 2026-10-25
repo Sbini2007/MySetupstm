@@ -128,7 +128,7 @@ export const StaggeredMenu = ({
               {/* Top bar inside sliding panel */}
               <div className="sm-panel-topbar">
                 <div className="flex items-center gap-2.5">
-                  <div className="h-11 w-11 relative">
+                  <div className="relative h-20 w-20">
                     <Image
                       src={logoImg}
                       alt="MySetups"
