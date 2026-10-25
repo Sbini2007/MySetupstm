@@ -83,7 +83,7 @@ export default function HomePage() {
             <TextType />
 
             <p className="mt-5 text-sm sm:text-base text-zinc-400 max-w-2xl mx-auto leading-relaxed">
-              Benvenuto su MySetups, forniamo assetti e assistenza tecnica per ottimizzare le prestazioni in pista, ridurre il degrado gomma e migliorare il passo in qualsiasi condizione.
+              Benvenuto su <strong className="text-zinc-200">MySetups</strong>, forniamo assetti <strong className="text-zinc-200">F1 26</strong> e assistenza tecnica per ottimizzare le prestazioni in pista, ridurre il degrado gomma e migliorare il passo in qualsiasi condizione.
             </p>
 
             {/* Hero CTAs */}
