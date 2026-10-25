@@ -160,7 +160,7 @@ export default function HomePage() {
 
             <p className="mt-6 text-sm sm:text-base text-zinc-400 max-w-2xl mx-auto leading-relaxed">
               L'hub di riferimento per gli assetti competitivi su <strong className="text-zinc-200">F1 26</strong>. 
-              Configurazioni tecniche su misura per tutti i 24 Gran Premi, calibrate con precisione per Qualifica, Gara e Parco Chiuso.
+              Configurazioni tecniche su misura per tutti i 25 circuiti, calibrate con precisione per Qualifica, Gara e Parco Chiuso.
             </p>
 
             {/* Hero CTAs */}
@@ -327,7 +327,7 @@ export default function HomePage() {
                 <div className="mt-6 flex flex-wrap gap-4 text-xs text-zinc-400 font-mono">
                   <div className="flex items-center gap-1.5">
                     <Check size={14} className="text-emerald-400" />
-                    <span>Canali per tutti i 24 GP</span>
+                    <span>Canali per tutti i 25 circuiti</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Check size={14} className="text-emerald-400" />

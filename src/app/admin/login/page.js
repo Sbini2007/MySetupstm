@@ -60,7 +60,7 @@ export default function AdminLoginPage() {
           </h1>
 
           <p className="mt-2 text-xs leading-relaxed text-zinc-400">
-            Modifica setup, telemetrie dei 24 circuiti e gestisci la lista di tutti gli utenti iscritti al server.
+            Modifica setup, telemetrie dei 25 circuiti e gestisci la lista di tutti gli utenti iscritti al server.
           </p>
 
           {errorMsg && (

@@ -1,4 +1,4 @@
-// Full 2026 Season F1 setups for all 24 circuits
+// Full 2026 Season F1 setups for all 25 circuits
 // Covers race, quali, and wet profiles with accurate telemetry parameters
 
 import { tracks } from "./data.js";
@@ -440,7 +440,10 @@ export const trackProfiles = {
 
 // Generates the flat setup object expected by SetupDisplay for all F1 26 variations
 export function generateFlatSetup(slug) {
-  const prof = trackProfiles[slug] || trackProfiles["italy-monza"];
+  const prof =
+    trackProfiles[slug] ||
+    (slug === "spain-madrid" ? trackProfiles.spain : null) ||
+    trackProfiles["italy-monza"];
   const out = {
     updatedAt: new Date().toISOString(),
     latest_variation: "Assetto Gara F1 26",

@@ -100,7 +100,7 @@ export default function SetupsPage() {
                   Setup Ufficiali F1 26
                 </h1>
                 <p className="mt-1 text-xs sm:text-sm text-zinc-400">
-                  Configurazioni per tutti i 24 Gran Premi: Qualifica, Gara e Parco Chiuso.
+                  Configurazioni per tutti i 25 circuiti: Qualifica, Gara e Parco Chiuso.
                 </p>
               </div>
 
