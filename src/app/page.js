@@ -88,23 +88,11 @@ export default function HomePage() {
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
               <Link
                 href="/setups"
-                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#5227ff] to-[#8b5cf6] px-6 py-3 text-xs sm:text-sm font-bold text-white transition hover:brightness-110 shadow-lg shadow-violet-950/40"
+                className="group inline-flex items-center gap-2 rounded-xl bg-[#7048ff] px-6 py-3 text-xs font-bold text-white shadow-lg shadow-violet-950/30 transition duration-200 hover:-translate-y-0.5 hover:bg-[#805dff] hover:shadow-violet-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090a12] motion-reduce:transform-none motion-reduce:transition-none sm:text-sm"
               >
                 <span>Esplora i Setup</span>
-                <ArrowRight size={14} />
+                <ArrowRight size={14} className="transition-transform duration-200 group-hover:translate-x-1 motion-reduce:transition-none" />
               </Link>
-
-              <a
-                href="https://discord.gg/YzVN3ncCwR"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 rounded-xl border border-violet-400/20 bg-violet-500/[0.06] px-5 py-3 text-xs sm:text-sm font-semibold text-zinc-200 transition hover:border-violet-400/40 hover:bg-violet-500/[0.12] hover:text-white"
-              >
-                <Users size={15} className="text-violet-300" />
-                <span>Community Discord</span>
-                <ArrowUpRight size={12} className="text-violet-300/70" />
-              </a>
-
             </div>
           </div>
         </section>
@@ -142,10 +130,10 @@ export default function HomePage() {
                 <div className="shrink-0 self-start md:self-center">
                   <Link
                     href={`/track/${latestUpdate.slug}`}
-                    className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#5227ff] to-[#8b5cf6] px-4 py-2.5 text-xs font-bold text-white transition hover:brightness-110"
+                    className="group inline-flex items-center gap-2 rounded-xl bg-[#7048ff] px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-violet-950/25 transition duration-200 hover:-translate-y-0.5 hover:bg-[#805dff] hover:shadow-violet-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090a12] motion-reduce:transform-none motion-reduce:transition-none"
                   >
                     <span>Vedi Pista Aggiornata</span>
-                    <ArrowRight size={13} />
+                    <ArrowRight size={13} className="transition-transform duration-200 group-hover:translate-x-1 motion-reduce:transition-none" />
                   </Link>
                 </div>
               </div>
@@ -174,11 +162,11 @@ export default function HomePage() {
                   href="https://discord.gg/YzVN3ncCwR"
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center justify-center gap-2.5 rounded-2xl bg-[#5865F2] px-8 py-4 text-sm font-bold text-white transition hover:bg-[#4752c4] shadow-lg"
+                  className="group inline-flex items-center justify-center gap-2.5 rounded-2xl bg-[#5865F2] px-8 py-4 text-sm font-bold text-white shadow-lg shadow-[#5865F2]/20 transition duration-200 hover:-translate-y-0.5 hover:bg-[#4752c4] hover:shadow-[#5865F2]/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#aab0ff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#090a12] motion-reduce:transform-none motion-reduce:transition-none"
                 >
                   <Users size={18} />
                   <span>Unisciti alla Community Discord</span>
-                  <ArrowUpRight size={16} />
+                  <ArrowUpRight size={16} className="transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 motion-reduce:transition-none" />
                 </a>
                 <span className="text-[11px] text-zinc-500 font-mono">
                   Accesso gratuito aperto a tutti i piloti
