@@ -1,19 +1,11 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useMemo, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useSession } from "@/lib/client-auth";
 import {
-  Search,
   ArrowRight,
-  Sliders,
-  Wind,
-  Disc,
-  Copy,
   Check,
-  Flame,
-  Trophy,
   ArrowUpRight,
   Clock,
   MessageSquare,
@@ -21,20 +13,11 @@ import {
 } from "lucide-react";
 import NavBar from "@/components/NavBar";
 import Footer from "@/components/Footer";
-import AnimatedList from "@/components/AnimatedList";
-import SetupDisplay from "@/components/SetupDisplay";
 import TextType from "@/components/TextType";
-import { tracks } from "@/lib/data";
-import { SETUP_TABS } from "@/lib/setup-sections";
 import { safeFetchJson } from "@/lib/safe-json";
 
 export default function HomePage() {
-  const { data: session } = useSession();
-  const [search, setSearch] = useState("");
-  const [selectedSlug, setSelectedSlug] = useState("italy-monza");
   const [latestUpdate, setLatestUpdate] = useState(null);
-  const [currentSetup, setCurrentSetup] = useState(null);
-  const [isAuthorized, setIsAuthorized] = useState(null);
 
   // Fetch latest track update dynamically
   useEffect(() => {
@@ -42,76 +25,6 @@ export default function HomePage() {
       if (d?.track) setLatestUpdate(d.track);
     });
   }, []);
-
-  // Fetch or load setup for selected track with instant fallback & live admin sync
-  useEffect(() => {
-    if (!selectedSlug) return;
-    setCurrentSetup(null);
-    setIsAuthorized(null);
-    const fetchSetup = () => {
-      safeFetchJson(`/api/setups/${selectedSlug}`, { cache: "no-store" }).then((data) => {
-        if (data) {
-          setIsAuthorized(data.isAuthorized);
-          setCurrentSetup(data.isAuthorized ? data.setup : null);
-        }
-      });
-    };
-
-    fetchSetup();
-
-    const onUpdate = (e) => {
-      if (!e?.detail?.slug || e.detail.slug === selectedSlug) {
-        fetchSetup();
-      }
-    };
-    window.addEventListener("mysetups_setup_updated", onUpdate);
-    window.addEventListener("storage", fetchSetup);
-    return () => {
-      window.removeEventListener("mysetups_setup_updated", onUpdate);
-      window.removeEventListener("storage", fetchSetup);
-    };
-  }, [selectedSlug]);
-
-  // Filtered tracks
-  const filteredTracks = useMemo(() => {
-    const q = search.toLowerCase().trim();
-    if (!q) return tracks;
-    return tracks.filter(
-      (t) =>
-        t.circuit.toLowerCase().includes(q) ||
-        t.country.toLowerCase().includes(q) ||
-        t.type?.toLowerCase().includes(q)
-    );
-  }, [search]);
-
-  // Selected track details
-  const selectedTrack = useMemo(() => {
-    return (
-      tracks.find((t) => t.slug === selectedSlug) ||
-      filteredTracks[0] ||
-      tracks[0]
-    );
-  }, [selectedSlug, filteredTracks]);
-
-  const selectedTrackIndex = useMemo(() => {
-    return tracks.findIndex((t) => t.slug === selectedTrack.slug) + 1;
-  }, [selectedTrack]);
-
-  // Clean items formatted for AnimatedList
-  const listItems = useMemo(() => {
-    return filteredTracks.map((t) => {
-      const origIdx = tracks.findIndex((orig) => orig.slug === t.slug);
-      const round = `R${String(origIdx + 1).padStart(2, "0")}`;
-      return {
-        id: t.slug,
-        slug: t.slug,
-        title: t.circuit,
-        description: t.country,
-        flagCode: t.flagCode,
-        round: round,
-      };
-    });
-  }, [filteredTracks]);
 
   const formattedUpdateDate = useMemo(() => {
     if (!latestUpdate?.updatedAt) return "Stagione F1 26";
@@ -132,7 +45,7 @@ export default function HomePage() {
       <div>
         <NavBar />
 
-        {/* ================= HERO SECTION (IMPATTO, ACCOGLIENTE CON LOGO AL CENTRO) ================= */}
+        {/* ================= HERO SECTION ================= */}
         <section className="relative px-4 pt-32 pb-14 sm:px-6 sm:pt-36 lg:px-8 text-center max-w-5xl mx-auto overflow-hidden">
           {/* Hero Background Atmosphere */}
           <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
@@ -224,78 +137,18 @@ export default function HomePage() {
                 </div>
 
                 <div className="shrink-0 self-start md:self-center">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedSlug(latestUpdate.slug)}
+                  <Link
+                    href={`/track/${latestUpdate.slug}`}
                     className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#5227ff] to-[#8b5cf6] px-4 py-2.5 text-xs font-bold text-white transition hover:brightness-110"
                   >
                     <span>Vedi Pista Aggiornata</span>
                     <ArrowRight size={13} />
-                  </button>
+                  </Link>
                 </div>
               </div>
             </div>
           </section>
         )}
-
-        {/* ================= EXPLORER SETUP F1 26 (SELEZIONE CIRCUITO + SCHEDA DETTAGLIATA) ================= */}
-        <main className="mx-auto max-w-6xl px-4 py-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            {/* Left Column: Circuit Selection List */}
-            <div className="lg:col-span-5 flex flex-col gap-3">
-              <div className="flex items-center justify-between text-xs text-zinc-400 px-1">
-                <span className="font-semibold text-zinc-200">
-                  Seleziona circuito ({filteredTracks.length})
-                </span>
-                <span className="text-[11px] font-mono text-zinc-500">
-                  Calendario F1 26
-                </span>
-              </div>
-
-              {/* Search Bar */}
-              <div className="relative">
-                <Search
-                  size={14}
-                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500"
-                />
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Cerca per circuito o nazione..."
-                  className="w-full rounded-xl border border-violet-400/[0.14] bg-[#0c0d15]/80 backdrop-blur-md py-2.5 pl-10 pr-3 text-xs text-white placeholder-zinc-500 outline-none transition focus:border-violet-400/50 focus:ring-2 focus:ring-violet-500/10"
-                />
-              </div>
-
-              {/* Robust AnimatedList Component */}
-              <AnimatedList
-                items={listItems}
-                selectedId={selectedSlug}
-                onItemSelect={(item) => {
-                  setSelectedSlug(item.slug);
-                }}
-                theme="dark"
-                width="100%"
-                maxHeight={580}
-                radius={16}
-                frame={true}
-                displayScrollbar={true}
-                enableArrowNavigation={true}
-              />
-            </div>
-
-            {/* Setup display; access is controlled by account permissions. */}
-            <div className="lg:col-span-7">
-              <SetupDisplay
-                setup={currentSetup}
-                isAuthorized={isAuthorized}
-                trackName={selectedTrack.circuit}
-                slug={selectedTrack.slug}
-                track={selectedTrack}
-              />
-            </div>
-          </div>
-        </main>
 
         {/* ================= INTEGRAZIONE COMMUNITY DISCORD ================= */}
         <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
