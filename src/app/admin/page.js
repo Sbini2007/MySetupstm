@@ -1,16 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
   BookOpen,
-  Crown,
   Headphones,
   Map,
   Plus,
   Settings,
-  Star,
   Trash2,
   UserRound,
   Shield,
@@ -19,8 +16,7 @@ import NavBar from "@/components/NavBar";
 import Footer from "@/components/Footer";
 import AdminSetupEditor from "@/components/AdminSetupEditor";
 import { getGuides, getTracks, saveGuides, saveTracks } from "@/lib/store";
-import { useLanguage } from "@/lib/i18n";
-import { USER_ROLES, ROLE_LABELS, ROLE_BADGES, getUserRole } from "@/lib/rbac";
+import { getUserRole } from "@/lib/rbac";
 import { safeFetchJson } from "@/lib/safe-json";
 import { useAuth } from "@/lib/client-auth";
 
@@ -30,12 +26,10 @@ const tabs = [
   { id: "tracks", label: "Circuiti", icon: Map },
   { id: "tickets", label: "Ticket", icon: Headphones },
   { id: "guides", label: "Guide", icon: BookOpen },
-  { id: "reviews", label: "Recensioni", icon: Star },
 ];
 
 export default function AdminPage() {
-  const { user, status, isAdmin, loginAsDiego } = useAuth();
-  const router = useRouter();
+  const { user, isAdmin, loginAsDiego, update } = useAuth();
   const [active, setActive] = useState("setups");
   const [tracks, setTracks] = useState([]);
   const [guides, setGuides] = useState([]);
@@ -52,8 +46,6 @@ export default function AdminPage() {
   const [editingGuideTitle, setEditingGuideTitle] = useState(null);
   const [ticketReply, setTicketReply] = useState("");
   const [selectedTicketId, setSelectedTicketId] = useState(null);
-  const { t } = useLanguage();
-
   useEffect(() => {
     setTracks(getTracks());
     setGuides(getGuides());
@@ -172,7 +164,7 @@ export default function AdminPage() {
     const data = await res.json();
     if (res.ok && data.users) {
       setUsers(data.users);
-      if (session?.user?.email?.toLowerCase() === String(email).toLowerCase()) {
+      if (user?.email?.toLowerCase() === String(email).toLowerCase()) {
         await update();
       }
     }
@@ -319,11 +311,9 @@ export default function AdminPage() {
       <NavBar />
       <main className="mx-auto max-w-7xl px-4 pb-20 pt-32 sm:px-6 lg:px-8">
         <div>
-          <p className="text-violet-400">{t("adminPanel")}</p>
-          <h1 className="mt-3 text-4xl font-black uppercase tracking-tight">Admin Panel</h1>
-          <p className="mt-2 text-white/58">{t("managePlatform")}</p>
+          <h1 className="text-2xl font-bold tracking-tight">Gestione</h1>
 
-          <div className="mt-10 flex flex-wrap gap-2 rounded-xl border border-white/10 bg-white/4 p-1">
+          <div className="mt-6 flex flex-wrap gap-6 border-b border-white/10">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               return (
@@ -331,8 +321,8 @@ export default function AdminPage() {
                   key={tab.id}
                   type="button"
                   onClick={() => setActive(tab.id)}
-                  className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition ${
-                    active === tab.id ? "bg-violet-500 text-white" : "text-white/62 hover:bg-white/8 hover:text-white"
+                  className={`inline-flex items-center gap-2 border-b-2 px-1 py-3 text-sm font-semibold transition ${
+                    active === tab.id ? "border-violet-400 text-white" : "border-transparent text-zinc-500 hover:text-white"
                   }`}
                 >
                   <Icon size={15} />
@@ -411,27 +401,22 @@ export default function AdminPage() {
             <section className="mt-10">
               <div className="mb-4 flex flex-wrap items-end justify-between gap-4">
                 <div>
-                  <h2 className="text-xl font-black uppercase text-white">
-                    Utenti Iscritti al Server ({users.length})
-                  </h2>
-                  <p className="mt-1 text-xs text-zinc-400">
-                    Visualizza tutti i piloti registrati nel server, le date di iscrizione e assegna ruoli o permessi.
-                  </p>
+                  <h2 className="text-lg font-bold text-white">Utenti iscritti ({users.length})</h2>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() => setAddUserOpen(!addUserOpen)}
-                    className="rounded-lg bg-white px-3.5 py-2 text-xs font-bold text-black transition hover:bg-zinc-200"
+                    className="px-2 py-2 text-sm text-zinc-300 transition hover:text-white"
                   >
-                    {addUserOpen ? "Chiudi Modulo" : "+ Iscrivi Nuovo Pilota"}
+                    {addUserOpen ? "Annulla" : "+ Aggiungi utente"}
                   </button>
                   <button
                     type="button"
                     onClick={() => refreshUsers()}
-                    className="rounded-lg border border-white/15 bg-white/[0.03] px-3.5 py-2 text-xs font-semibold text-white/80 hover:bg-white/10"
+                    className="px-2 py-2 text-sm text-zinc-500 transition hover:text-white"
                   >
-                    Aggiorna
+                    Ricarica
                   </button>
                 </div>
               </div>
@@ -440,7 +425,7 @@ export default function AdminPage() {
               {addUserOpen && (
                 <form
                   onSubmit={createUser}
-                  className="mb-6 rounded-2xl border border-white/15 bg-[#0e0f1a] p-5 grid grid-cols-1 sm:grid-cols-4 gap-3 items-end"
+                  className="mb-6 grid grid-cols-1 gap-4 border-y border-white/10 py-5 sm:grid-cols-4 sm:items-end"
                 >
                   <div>
                     <label className="text-[10px] font-mono text-zinc-400 uppercase block mb-1">
@@ -451,7 +436,7 @@ export default function AdminPage() {
                       placeholder="Nome e Cognome"
                       value={newUserName}
                       onChange={(e) => setNewUserName(e.target.value)}
-                      className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs text-white outline-none focus:border-white/30"
+                      className="w-full border-b border-white/15 bg-transparent px-1 py-2 text-sm text-white outline-none focus:border-white/50"
                     />
                   </div>
                   <div>
@@ -464,7 +449,7 @@ export default function AdminPage() {
                       placeholder="pilota@email.it"
                       value={newUserEmail}
                       onChange={(e) => setNewUserEmail(e.target.value)}
-                      className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs text-white outline-none focus:border-white/30"
+                      className="w-full border-b border-white/15 bg-transparent px-1 py-2 text-sm text-white outline-none focus:border-white/50"
                     />
                   </div>
                   <div>
@@ -474,7 +459,7 @@ export default function AdminPage() {
                     <select
                       value={newUserRole}
                       onChange={(e) => setNewUserRole(e.target.value)}
-                      className="w-full rounded-xl border border-white/10 bg-[#141522] px-3 py-2 text-xs text-white outline-none"
+                      className="w-full border-b border-white/15 bg-transparent px-1 py-2 text-sm text-white outline-none"
                     >
                       <option value="user">Pilota Free / Visitatore</option>
                       <option value="subscriber">Accesso ai setup</option>
@@ -485,44 +470,12 @@ export default function AdminPage() {
                   </div>
                   <button
                     type="submit"
-                    className="rounded-xl bg-white px-4 py-2 text-xs font-black uppercase text-black hover:bg-zinc-200 transition"
+                    className="px-2 py-2 text-sm font-semibold text-white transition hover:text-violet-300"
                   >
                     Salva Utente
                   </button>
                 </form>
               )}
-
-              {/* Roles Summary Counter Bar */}
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
-                <div className="rounded-xl border border-white/[0.08] bg-[#0c0d15]/80 p-3">
-                  <span className="text-[10px] font-mono uppercase text-zinc-500 block">Totale Account</span>
-                  <span className="text-lg font-black font-mono text-white mt-0.5 block">{users.length}</span>
-                </div>
-                <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3">
-                  <span className="text-[10px] font-mono uppercase text-emerald-400 block">Accesso ai setup</span>
-                  <span className="text-lg font-black font-mono text-emerald-300 mt-0.5 block">
-                    {users.filter((u) => getUserRole(u) === "subscriber").length}
-                  </span>
-                </div>
-                <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 p-3">
-                  <span className="text-[10px] font-mono uppercase text-violet-400 block">VIP Members</span>
-                  <span className="text-lg font-black font-mono text-violet-300 mt-0.5 block">
-                    {users.filter((u) => getUserRole(u) === "vip").length}
-                  </span>
-                </div>
-                <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3">
-                  <span className="text-[10px] font-mono uppercase text-amber-400 block">Editor Setup</span>
-                  <span className="text-lg font-black font-mono text-amber-300 mt-0.5 block">
-                    {users.filter((u) => getUserRole(u) === "editor").length}
-                  </span>
-                </div>
-                <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-3">
-                  <span className="text-[10px] font-mono uppercase text-red-400 block">Admin Staff</span>
-                  <span className="text-lg font-black font-mono text-red-300 mt-0.5 block">
-                    {users.filter((u) => getUserRole(u) === "admin").length}
-                  </span>
-                </div>
-              </div>
 
               {/* Search User Input */}
               <div className="mb-4">
@@ -536,10 +489,7 @@ export default function AdminPage() {
               </div>
 
               {users.length === 0 ? (
-                <div className="rounded-2xl border border-white/10 bg-[#0c0d15] p-8 text-center text-zinc-400">
-                  <p className="font-semibold text-white">Nessun utente iscritto nel server.</p>
-                  <p className="text-xs mt-1">Usa il pulsante sopra per aggiungere un pilota o effettua un'iscrizione dalla pagina di login.</p>
-                </div>
+                <p className="py-8 text-sm text-zinc-500">Nessun utente iscritto.</p>
               ) : (
                 <div className="space-y-3">
                   {users
@@ -553,86 +503,45 @@ export default function AdminPage() {
                     })
                     .map((user) => {
                       const role = getUserRole(user);
-                      const badge = ROLE_BADGES[role] || ROLE_BADGES.user;
                       const dateStr = user.createdAt
                         ? new Date(user.createdAt).toLocaleDateString("it-IT", {
                             day: "2-digit",
                             month: "short",
                             year: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
                           })
-                        : "Data non registrata";
+                        : "";
 
                       return (
                         <div
                           key={user.email}
-                          className="flex flex-col gap-4 rounded-xl border border-white/[0.08] bg-[#0c0d15]/90 p-4 lg:flex-row lg:items-center lg:justify-between transition hover:border-white/15"
+                          className="flex flex-col gap-3 border-b border-white/10 py-4 lg:flex-row lg:items-center lg:justify-between"
                         >
-                          <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 shrink-0 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center font-bold text-sm text-zinc-300 overflow-hidden">
-                              {user.image ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img src={user.image} alt="" className="h-full w-full object-cover" />
-                              ) : (
-                                (user.name || user.email || "U")[0].toUpperCase()
-                              )}
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <p className="font-bold text-sm text-white">{user.name || "Utente"}</p>
-                                <span className={`rounded-md border px-2 py-0.5 text-[9px] font-mono font-bold uppercase ${badge.color}`}>
-                                  {badge.label}
-                                </span>
-                              </div>
-                              <p className="text-xs text-zinc-400">{user.email}</p>
-                              <div className="flex flex-wrap items-center gap-2 mt-1">
-                                <span className="text-[10px] font-mono text-zinc-500">
-                                  Iscritto: {dateStr}
-                                </span>
-                                {user.provider ? (
-                                  <span className="text-[10px] font-mono text-zinc-500">
-                                    · via {user.provider}
-                                  </span>
-                                ) : null}
-                              </div>
-                            </div>
+                          <div className="min-w-0">
+                            <p className="font-semibold text-white">{user.name || "Utente"}</p>
+                            <p className="text-sm text-zinc-400">{user.email}</p>
+                            {dateStr && <p className="mt-1 text-xs text-zinc-500">{dateStr}</p>}
                           </div>
 
                           {/* RBAC Role Selector Dropdown & Actions */}
                           <div className="flex items-center gap-3 self-end lg:self-center">
-                            <div className="flex flex-col items-start sm:items-end">
-                              <span className="text-[10px] font-mono uppercase text-zinc-500 mb-1">
-                                Assegna Ruolo:
-                              </span>
-                              <select
-                                value={role}
-                                onChange={(e) => patchUser(user.email, { role: e.target.value })}
-                                className="rounded-lg border border-white/[0.12] bg-[#141522] px-3 py-1.5 text-xs font-bold text-white outline-none cursor-pointer hover:border-white/30 transition"
-                              >
-                                <option value="user" className="bg-[#0f1019] text-zinc-300">
-                                  Visitatore / Free
-                                </option>
-                                <option value="subscriber" className="bg-[#0f1019] text-emerald-300">
-                                  Accesso ai setup
-                                </option>
-                                <option value="vip" className="bg-[#0f1019] text-violet-300">
-                                  VIP Member
-                                </option>
-                                <option value="editor" className="bg-[#0f1019] text-amber-300">
-                                  Editor (Modifica Setup)
-                                </option>
-                                <option value="admin" className="bg-[#0f1019] text-red-300">
-                                  Amministratore (Admin)
-                                </option>
-                              </select>
-                            </div>
+                            <select
+                              aria-label={`Permessi ${user.email}`}
+                              value={role}
+                              onChange={(e) => patchUser(user.email, { role: e.target.value })}
+                              className="max-w-56 border-b border-white/15 bg-transparent px-1 py-2 text-sm text-zinc-300 outline-none transition hover:border-white/40"
+                            >
+                              <option value="user" className="bg-[#0f1019]">Nessun accesso</option>
+                              <option value="subscriber" className="bg-[#0f1019]">Accesso ai setup</option>
+                              <option value="vip" className="bg-[#0f1019]">VIP</option>
+                              <option value="editor" className="bg-[#0f1019]">Editor</option>
+                              <option value="admin" className="bg-[#0f1019]">Amministratore</option>
+                            </select>
 
                             <button
                               type="button"
                               onClick={() => deleteUser(user.email)}
                               title="Elimina utente"
-                              className="mt-4 lg:mt-0 p-2 rounded-lg border border-red-500/20 bg-red-500/5 text-red-400 hover:bg-red-500/20 transition"
+                              className="p-2 text-zinc-500 transition hover:text-red-400"
                             >
                               <Trash2 size={15} />
                             </button>
@@ -800,23 +709,11 @@ export default function AdminPage() {
           ) : null}
 
           {active === "setups" ? (
-            <section className="mt-10 rounded-xl border border-white/10 bg-white/4 p-6 sm:p-8">
-              <h2 className="text-xl font-black uppercase">Setup piste</h2>
-              <p className="mt-2 text-sm text-white/50">
-                Dati in <code className="text-violet-200/90">data/track-setups.json</code> — Gara, Qualifica, Bagnato per ogni circuito.
-              </p>
-              <div className="mt-8">
-                <AdminSetupEditor />
-              </div>
+            <section className="mt-8">
+              <AdminSetupEditor />
             </section>
           ) : null}
 
-          {active === "reviews" ? (
-            <section className="mt-10 rounded-xl border border-white/10 bg-white/4 p-8">
-              <h2 className="text-xl font-black uppercase">Reviews</h2>
-              <p className="mt-3 text-white/58">Area pronta per collegare dati reali: puoi usare questo spazio per aggiungere review gestite.</p>
-            </section>
-          ) : null}
         </div>
       </main>
       <Footer />

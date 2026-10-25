@@ -3,20 +3,8 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { tracks } from "@/lib/data";
-import { SETUP_TABS, tabToPrefix, clampValue, PARAM_LIMITS } from "@/lib/setup-sections";
+import { SETUP_SECTIONS, SETUP_TABS, tabToPrefix, clampValue } from "@/lib/setup-sections";
 import { safeFetchJson } from "@/lib/safe-json";
-import {
-  Save,
-  Check,
-  AlertCircle,
-  RotateCcw,
-  Wind,
-  Sliders,
-  Disc,
-  CircleDot,
-  Gauge,
-  Layers
-} from "lucide-react";
 
 export default function AdminSetupEditor() {
   const [all, setAll] = useState(null);
@@ -29,611 +17,196 @@ export default function AdminSetupEditor() {
   const [saving, setSaving] = useState(false);
 
   const load = () => {
-    safeFetchJson("/api/admin/setups", {
-      cache: "no-store",
-    })
-      .then((d) => {
-        setAll(d?.setups || {});
-        setDefaults(d?.defaults || {});
+    safeFetchJson("/api/admin/setups", { cache: "no-store" })
+      .then((data) => {
+        setAll(data?.setups || {});
+        setDefaults(data?.defaults || {});
       })
-      .catch(() => setAll({}));
+      .catch(() => {
+        setErrorMsg("Impossibile caricare i setup.");
+      });
   };
 
   useEffect(() => {
     load();
   }, []);
 
-  // When track changes or all setups load, initialize draft with stored values or default
   useEffect(() => {
     if (!selectedSlug) return;
     const fallback = defaults[selectedSlug] || {};
-    const stored = all && all[selectedSlug] ? all[selectedSlug] : null;
-    setDraft({ ...fallback, ...(stored || {}) });
+    const stored = all?.[selectedSlug] || {};
+    setDraft({ ...fallback, ...stored });
   }, [all, defaults, selectedSlug]);
 
-  const currentTrack = tracks.find((t) => t.slug === selectedSlug) || tracks[0];
+  const currentTrack = tracks.find((track) => track.slug === selectedSlug) || tracks[0];
   const prefix = tabToPrefix(activeTab);
 
   const setParamValue = (suffix, value) => {
-    const key = `${prefix}${suffix}`;
-    if (value === "") {
-      setDraft((prev) => ({ ...prev, [key]: "" }));
-      return;
-    }
-    const num = Number(value);
-    const clamped = clampValue(suffix, num);
-    setDraft((prev) => ({
-      ...prev,
-      [key]: clamped,
-    }));
+    const numericValue = Number(value);
+    const clampedValue = clampValue(suffix, numericValue);
+    setDraft((previous) => ({ ...previous, [`${prefix}${suffix}`]: clampedValue }));
   };
 
   const getParamValue = (suffix, fallback) => {
     if (!draft) return fallback;
-    const key = `${prefix}${suffix}`;
-    const v = draft[key];
-    return v !== undefined && v !== null ? v : fallback;
+    const value = draft[`${prefix}${suffix}`];
+    return value !== undefined && value !== null && value !== "" ? value : fallback;
   };
 
-  const currentTabObj = SETUP_TABS.find((t) => t.key === activeTab) || SETUP_TABS[0];
-
   const handleSave = async () => {
-    if (!draft) return;
+    if (!draft || !currentTrack) return;
     setSaving(true);
     setMsg("");
     setErrorMsg("");
 
     try {
-      const res = await fetch("/api/admin/setups", {
+      const response = await fetch("/api/admin/setups", {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ slug: selectedSlug, setup: draft }),
       });
 
-      if (res.ok) {
-        setMsg(`Setup per ${currentTrack.circuit} (${currentTrack.country}) salvato con successo!`);
-        setTimeout(() => setMsg(""), 4000);
-        load();
-        try {
-          window.dispatchEvent(
-            new CustomEvent("mysetups_setup_updated", { detail: { slug: selectedSlug } })
-          );
-          localStorage.setItem("mysetups_last_updated", String(Date.now()));
-        } catch {}
-      } else {
-        const e = await res.json().catch(() => ({}));
-        setErrorMsg(e.error || "Errore durante il salvataggio.");
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        setErrorMsg(data.error || "Errore durante il salvataggio.");
+        return;
       }
+
+      setMsg("Setup salvato.");
+      load();
+      window.dispatchEvent(
+        new CustomEvent("mysetups_setup_updated", { detail: { slug: selectedSlug } })
+      );
     } catch {
-      setErrorMsg("Errore di connessione col server.");
+      setErrorMsg("Errore di connessione durante il salvataggio.");
     } finally {
       setSaving(false);
     }
   };
 
   const handleResetToDefault = () => {
-    if (!window.confirm(`Ripristinare i valori predefiniti per ${currentTrack.circuit}?`)) return;
+    if (!currentTrack || !window.confirm(`Ripristinare i valori predefiniti per ${currentTrack.circuit}?`)) {
+      return;
+    }
     setDraft(defaults[selectedSlug] || {});
-    setMsg(`Valori reimpostati per ${currentTrack.circuit}. Clicca Salva per confermare.`);
-    setTimeout(() => setMsg(""), 4000);
+    setMsg("Valori predefiniti ripristinati. Salva per confermare.");
+    setErrorMsg("");
   };
 
+  if (!currentTrack) return null;
+
   return (
-    <div className="space-y-5">
-      {/* Circuit Selector & Header Bar */}
-      <div className="rounded-2xl border border-white/10 bg-[#0c0d16] p-5 shadow-xl">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="relative h-10 w-14 shrink-0 overflow-hidden rounded-lg border border-white/15 bg-black/40">
-              <Image
-                src={`/flags/${currentTrack.flagCode}.svg`}
-                alt=""
-                width={48}
-                height={32}
-                className="h-full w-full object-cover"
-              />
-            </div>
-            <div>
-              <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-400 block">
-                Editor Assetti F1 26 · Modifica Setup
-              </span>
-              <h2 className="text-lg sm:text-xl font-black text-white">
-                {currentTrack.circuit} ({currentTrack.country})
-              </h2>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2">
-              <label className="text-xs text-zinc-400 font-mono">Circuito:</label>
-              <select
-                value={selectedSlug}
-                onChange={(e) => setSelectedSlug(e.target.value)}
-                className="rounded-xl border border-white/15 bg-black/60 px-3.5 py-2 text-xs font-bold text-white outline-none cursor-pointer"
-              >
-                {tracks.map((t, idx) => (
-                  <option key={t.slug} value={t.slug} className="bg-[#0c0d16] text-white">
-                    R{String(idx + 1).padStart(2, "0")} · {t.country} ({t.circuit})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleResetToDefault}
-              title="Reimposta valori calcolati"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-xs text-zinc-400 hover:text-white hover:bg-white/[0.08] transition cursor-pointer"
-            >
-              <RotateCcw size={13} />
-              <span>Reset</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={saving}
-              className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2 text-xs font-black uppercase tracking-wider text-black transition hover:bg-zinc-200 disabled:opacity-50 shadow-md cursor-pointer active:scale-95"
-            >
-              <Save size={14} />
-              <span>{saving ? "Salvataggio..." : "Salva Setup"}</span>
-            </button>
-          </div>
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <Image
+            src={`/flags/${currentTrack.flagCode}.svg`}
+            alt=""
+            width={40}
+            height={28}
+            className="h-7 w-10 rounded-sm object-cover"
+          />
+          <h2 className="text-lg font-bold text-white">{currentTrack.circuit}</h2>
         </div>
-
-        {/* Success / Error Feedback */}
-        {msg && (
-          <div className="mt-4 flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-300">
-            <Check size={14} className="text-emerald-400 shrink-0" />
-            <span>{msg}</span>
-          </div>
-        )}
-
-        {errorMsg && (
-          <div className="mt-4 flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-300">
-            <AlertCircle size={14} className="text-red-400 shrink-0" />
-            <span>{errorMsg}</span>
-          </div>
-        )}
-
-        {/* 3 Variations Selector: Qualifica, Gara, Parco Chiuso */}
-        <div className="mt-5 border-t border-white/[0.08] pt-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400">
-              Seleziona Variazione da Modificare:
-            </span>
-            <span className="text-[10px] font-mono text-zinc-400">
-              Editing: <strong className="text-white">{currentTabObj.label}</strong>
-            </span>
-          </div>
-
-          <div className="grid grid-cols-3 gap-2">
-            {SETUP_TABS.map((tab) => {
-              const active = activeTab === tab.key;
-              return (
-                <button
-                  key={tab.key}
-                  type="button"
-                  onClick={() => setActiveTab(tab.key)}
-                  className={`rounded-xl py-2.5 text-xs font-black uppercase tracking-wider transition cursor-pointer ${
-                    active
-                      ? "bg-white text-black shadow-md ring-1 ring-white/50"
-                      : "border border-white/10 bg-white/[0.03] text-zinc-400 hover:text-white hover:bg-white/[0.06]"
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <select
+            aria-label="Circuito"
+            value={selectedSlug}
+            onChange={(event) => setSelectedSlug(event.target.value)}
+            className="min-w-0 rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white outline-none"
+          >
+            {tracks.map((track) => (
+              <option key={track.slug} value={track.slug} className="bg-[#0c0d16]">
+                {track.circuit}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={handleResetToDefault}
+            className="px-2 py-2 text-sm text-zinc-400 transition hover:text-white"
+          >
+            Reset
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving || !draft}
+            className="rounded-lg bg-white px-4 py-2 text-sm font-bold text-black transition hover:bg-zinc-200 disabled:opacity-50"
+          >
+            {saving ? "Salvataggio..." : "Salva"}
+          </button>
         </div>
       </div>
 
-      {/* Editing List: Full-Width Horizontal Rectangles (One per row) */}
-      <div className="flex flex-col gap-3.5">
+      {(msg || errorMsg) && (
+        <p role={errorMsg ? "alert" : "status"} className={`text-sm ${errorMsg ? "text-red-300" : "text-zinc-300"}`}>
+          {errorMsg || msg}
+        </p>
+      )}
 
-        {/* 1. AERODINAMICA [0 - 50] */}
-        <div className="rounded-2xl border border-white/10 bg-[#0c0d16] p-5 shadow-xl">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-            <div className="lg:w-48 shrink-0 flex items-center gap-2.5 border-b lg:border-b-0 lg:border-r border-white/[0.08] pb-2 lg:pb-0 lg:pr-4">
-              <div className="h-8 w-8 rounded-lg border border-white/10 bg-white/[0.05] flex items-center justify-center shrink-0">
-                <Wind size={16} className="text-zinc-200" />
-              </div>
-              <div>
-                <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-white">
-                  1. Aerodinamica
-                </h3>
-                <span className="text-[10px] text-zinc-400 block font-mono">Ali [0 - 50]</span>
-              </div>
-            </div>
-
-            <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="rounded-xl border border-white/[0.05] bg-black/40 p-3">
-                <div className="flex justify-between text-xs mb-1.5">
-                  <span className="text-zinc-300 font-medium">Ala Anteriore</span>
-                  <span className="font-mono font-bold text-white text-sm">{getParamValue("front_wing", 26)}</span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="50"
-                  step="1"
-                  value={getParamValue("front_wing", 26)}
-                  onChange={(e) => setParamValue("front_wing", e.target.value)}
-                  className="w-full accent-white cursor-pointer"
-                />
-              </div>
-
-              <div className="rounded-xl border border-white/[0.05] bg-black/40 p-3">
-                <div className="flex justify-between text-xs mb-1.5">
-                  <span className="text-zinc-300 font-medium">Ala Posteriore</span>
-                  <span className="font-mono font-bold text-white text-sm">{getParamValue("rear_wing", 22)}</span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="50"
-                  step="1"
-                  value={getParamValue("rear_wing", 22)}
-                  onChange={(e) => setParamValue("rear_wing", e.target.value)}
-                  className="w-full accent-white cursor-pointer"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 2. TRASMISSIONE [0 - 100] */}
-        <div className="rounded-2xl border border-white/10 bg-[#0c0d16] p-5 shadow-xl">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-            <div className="lg:w-48 shrink-0 flex items-center gap-2.5 border-b lg:border-b-0 lg:border-r border-white/[0.08] pb-2 lg:pb-0 lg:pr-4">
-              <div className="h-8 w-8 rounded-lg border border-white/10 bg-white/[0.05] flex items-center justify-center shrink-0">
-                <Sliders size={16} className="text-zinc-200" />
-              </div>
-              <div>
-                <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-white">
-                  2. Trasmissione
-                </h3>
-                <span className="text-[10px] text-zinc-400 block font-mono">Differenziale [0 - 100%]</span>
-              </div>
-            </div>
-
-            <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="rounded-xl border border-white/[0.05] bg-black/40 p-3">
-                <div className="flex justify-between text-xs mb-1.5">
-                  <span className="text-zinc-300 text-[11px]">Diff. In Trazione (On-Throttle)</span>
-                  <span className="font-mono font-bold text-white text-sm">{getParamValue("diff_on", 55)}%</span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  step="1"
-                  value={getParamValue("diff_on", 55)}
-                  onChange={(e) => setParamValue("diff_on", e.target.value)}
-                  className="w-full accent-white cursor-pointer"
-                />
-              </div>
-
-              <div className="rounded-xl border border-white/[0.05] bg-black/40 p-3">
-                <div className="flex justify-between text-xs mb-1.5">
-                  <span className="text-zinc-300 text-[11px]">Diff. In Rilascio (Off-Throttle)</span>
-                  <span className="font-mono font-bold text-white text-sm">{getParamValue("diff_off", 50)}%</span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  step="1"
-                  value={getParamValue("diff_off", 50)}
-                  onChange={(e) => setParamValue("diff_off", e.target.value)}
-                  className="w-full accent-white cursor-pointer"
-                />
-              </div>
-
-            </div>
-          </div>
-        </div>
-
-        {/* 3. GEOMETRIA SOSPENSIONI (Lasciate così) */}
-        <div className="rounded-2xl border border-white/10 bg-[#0c0d16] p-5 shadow-xl">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-            <div className="lg:w-48 shrink-0 flex items-center gap-2.5 border-b lg:border-b-0 lg:border-r border-white/[0.08] pb-2 lg:pb-0 lg:pr-4">
-              <div className="h-8 w-8 rounded-lg border border-white/10 bg-white/[0.05] flex items-center justify-center shrink-0">
-                <Layers size={16} className="text-zinc-200" />
-              </div>
-              <div>
-                <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-white">
-                  3. Geometria Sosp.
-                </h3>
-                <span className="text-[10px] text-zinc-400 block font-mono">Camber & Convergenza</span>
-              </div>
-            </div>
-
-            <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-              <div className="rounded-xl border border-white/[0.05] bg-black/40 p-2.5">
-                <label className="text-[10px] font-mono text-zinc-400 block mb-1">Camp. Ant. [-3.5 / -2.5]°</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  min="-3.5"
-                  max="-2.5"
-                  value={getParamValue("front_camber", -2.8)}
-                  onChange={(e) => setParamValue("front_camber", e.target.value)}
-                  className="w-full rounded-lg border border-white/10 bg-black/60 px-2.5 py-1.5 text-xs text-white font-mono"
-                />
-              </div>
-
-              <div className="rounded-xl border border-white/[0.05] bg-black/40 p-2.5">
-                <label className="text-[10px] font-mono text-zinc-400 block mb-1">Camp. Post. [-2.2 / -1.0]°</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  min="-2.2"
-                  max="-1.0"
-                  value={getParamValue("rear_camber", -1.8)}
-                  onChange={(e) => setParamValue("rear_camber", e.target.value)}
-                  className="w-full rounded-lg border border-white/10 bg-black/60 px-2.5 py-1.5 text-xs text-white font-mono"
-                />
-              </div>
-
-              <div className="rounded-xl border border-white/[0.05] bg-black/40 p-2.5">
-                <label className="text-[10px] font-mono text-zinc-400 block mb-1">Conv. Ant. [0.0 / 0.20]°</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0.00"
-                  max="0.20"
-                  value={getParamValue("front_toe", 0.05)}
-                  onChange={(e) => setParamValue("front_toe", e.target.value)}
-                  className="w-full rounded-lg border border-white/10 bg-black/60 px-2.5 py-1.5 text-xs text-white font-mono"
-                />
-              </div>
-
-              <div className="rounded-xl border border-white/[0.05] bg-black/40 p-2.5">
-                <label className="text-[10px] font-mono text-zinc-400 block mb-1">Conv. Post. [0.10 / 0.40]°</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0.10"
-                  max="0.40"
-                  value={getParamValue("rear_toe", 0.15)}
-                  onChange={(e) => setParamValue("rear_toe", e.target.value)}
-                  className="w-full rounded-lg border border-white/10 bg-black/60 px-2.5 py-1.5 text-xs text-white font-mono"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 4. SOSPENSIONI [Sosp 1-41, Barre 1-21, Altezze 15-60] */}
-        <div className="rounded-2xl border border-white/10 bg-[#0c0d16] p-5 shadow-xl">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-            <div className="lg:w-48 shrink-0 flex items-center gap-2.5 border-b lg:border-b-0 lg:border-r border-white/[0.08] pb-2 lg:pb-0 lg:pr-4">
-              <div className="h-8 w-8 rounded-lg border border-white/10 bg-white/[0.05] flex items-center justify-center shrink-0">
-                <Gauge size={16} className="text-zinc-200" />
-              </div>
-              <div>
-                <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-white">
-                  4. Sospensioni
-                </h3>
-                <span className="text-[10px] text-zinc-400 block font-mono">Molle [1-41], Barre [1-21], Altezze [15-60]</span>
-              </div>
-            </div>
-
-            <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
-              <div className="rounded-xl border border-white/[0.05] bg-black/40 p-2.5">
-                <label className="text-[10px] font-mono text-zinc-400 block mb-1">Sosp. Ant. [1-41]</label>
-                <input
-                  type="number"
-                  min="1"
-                  max="41"
-                  value={getParamValue("front_suspension", 28)}
-                  onChange={(e) => setParamValue("front_suspension", e.target.value)}
-                  className="w-full rounded-lg border border-white/10 bg-black/60 px-2 py-1.5 text-xs text-white font-mono"
-                />
-              </div>
-
-              <div className="rounded-xl border border-white/[0.05] bg-black/40 p-2.5">
-                <label className="text-[10px] font-mono text-zinc-400 block mb-1">Sosp. Post. [1-41]</label>
-                <input
-                  type="number"
-                  min="1"
-                  max="41"
-                  value={getParamValue("rear_suspension", 14)}
-                  onChange={(e) => setParamValue("rear_suspension", e.target.value)}
-                  className="w-full rounded-lg border border-white/10 bg-black/60 px-2 py-1.5 text-xs text-white font-mono"
-                />
-              </div>
-
-              <div className="rounded-xl border border-white/[0.05] bg-black/40 p-2.5">
-                <label className="text-[10px] font-mono text-zinc-400 block mb-1">Barra Ant. [1-21]</label>
-                <input
-                  type="number"
-                  min="1"
-                  max="21"
-                  value={getParamValue("front_antiroll", 15)}
-                  onChange={(e) => setParamValue("front_antiroll", e.target.value)}
-                  className="w-full rounded-lg border border-white/10 bg-black/60 px-2 py-1.5 text-xs text-white font-mono"
-                />
-              </div>
-
-              <div className="rounded-xl border border-white/[0.05] bg-black/40 p-2.5">
-                <label className="text-[10px] font-mono text-zinc-400 block mb-1">Barra Post. [1-21]</label>
-                <input
-                  type="number"
-                  min="1"
-                  max="21"
-                  value={getParamValue("rear_antiroll", 8)}
-                  onChange={(e) => setParamValue("rear_antiroll", e.target.value)}
-                  className="w-full rounded-lg border border-white/10 bg-black/60 px-2 py-1.5 text-xs text-white font-mono"
-                />
-              </div>
-
-              <div className="rounded-xl border border-white/[0.05] bg-black/40 p-2.5">
-                <label className="text-[10px] font-mono text-zinc-400 block mb-1">Altezza Ant. [15-60]</label>
-                <input
-                  type="number"
-                  min="15"
-                  max="60"
-                  value={getParamValue("front_ride_height", 33)}
-                  onChange={(e) => setParamValue("front_ride_height", e.target.value)}
-                  className="w-full rounded-lg border border-white/10 bg-black/60 px-2 py-1.5 text-xs text-white font-mono"
-                />
-              </div>
-
-              <div className="rounded-xl border border-white/[0.05] bg-black/40 p-2.5">
-                <label className="text-[10px] font-mono text-zinc-400 block mb-1">Altezza Post. [15-60]</label>
-                <input
-                  type="number"
-                  min="15"
-                  max="60"
-                  value={getParamValue("rear_ride_height", 44)}
-                  onChange={(e) => setParamValue("rear_ride_height", e.target.value)}
-                  className="w-full rounded-lg border border-white/10 bg-black/60 px-2 py-1.5 text-xs text-white font-mono"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 5. FRENI [0 - 100] */}
-        <div className="rounded-2xl border border-white/10 bg-[#0c0d16] p-5 shadow-xl">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-            <div className="lg:w-48 shrink-0 flex items-center gap-2.5 border-b lg:border-b-0 lg:border-r border-white/[0.08] pb-2 lg:pb-0 lg:pr-4">
-              <div className="h-8 w-8 rounded-lg border border-white/10 bg-white/[0.05] flex items-center justify-center shrink-0">
-                <Disc size={16} className="text-zinc-200" />
-              </div>
-              <div>
-                <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-white">
-                  5. Freni
-                </h3>
-                <span className="text-[10px] text-zinc-400 block font-mono">Pressione & Ripartizione [0 - 100%]</span>
-              </div>
-            </div>
-
-            <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="rounded-xl border border-white/[0.05] bg-black/40 p-3">
-                <div className="flex justify-between text-xs mb-1.5">
-                  <span className="text-zinc-300">Pressione Freni</span>
-                  <span className="font-mono font-bold text-white text-sm">{getParamValue("brake_pressure", 100)}%</span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  step="1"
-                  value={getParamValue("brake_pressure", 100)}
-                  onChange={(e) => setParamValue("brake_pressure", e.target.value)}
-                  className="w-full accent-white cursor-pointer"
-                />
-              </div>
-
-              <div className="rounded-xl border border-white/[0.05] bg-black/40 p-3">
-                <div className="flex justify-between text-xs mb-1.5">
-                  <span className="text-zinc-300">Ripartizione Frenata (Brake Bias)</span>
-                  <span className="font-mono font-bold text-white text-sm">{getParamValue("brake_bias", 54.5)}%</span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  step="0.5"
-                  value={getParamValue("brake_bias", 54.5)}
-                  onChange={(e) => setParamValue("brake_bias", e.target.value)}
-                  className="w-full accent-white cursor-pointer"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 6. PRESSIONE PNEUMATICI [Ant 23.5-29.5, Post 20.5-26.5] */}
-        <div className="rounded-2xl border border-white/10 bg-[#0c0d16] p-5 shadow-xl">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-            <div className="lg:w-48 shrink-0 flex items-center gap-2.5 border-b lg:border-b-0 lg:border-r border-white/[0.08] pb-2 lg:pb-0 lg:pr-4">
-              <div className="h-8 w-8 rounded-lg border border-white/10 bg-white/[0.05] flex items-center justify-center shrink-0">
-                <CircleDot size={16} className="text-zinc-200" />
-              </div>
-              <div>
-                <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-white">
-                  6. Pressione Gomme
-                </h3>
-                <span className="text-[10px] text-zinc-400 block font-mono">Ant. [23.5 - 29.5], Post. [20.5 - 26.5] PSI</span>
-              </div>
-            </div>
-
-            <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-              <div className="rounded-xl border border-white/[0.05] bg-black/40 p-2.5">
-                <label className="text-[10px] font-mono text-zinc-400 block mb-1">Ant. SX [23.5-29.5]</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  min="23.5"
-                  max="29.5"
-                  value={getParamValue("front_left_psi", 23.5)}
-                  onChange={(e) => setParamValue("front_left_psi", e.target.value)}
-                  className="w-full rounded-lg border border-white/10 bg-black/60 px-2.5 py-1.5 text-xs text-white font-mono"
-                />
-              </div>
-
-              <div className="rounded-xl border border-white/[0.05] bg-black/40 p-2.5">
-                <label className="text-[10px] font-mono text-zinc-400 block mb-1">Ant. DX [23.5-29.5]</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  min="23.5"
-                  max="29.5"
-                  value={getParamValue("front_right_psi", 23.5)}
-                  onChange={(e) => setParamValue("front_right_psi", e.target.value)}
-                  className="w-full rounded-lg border border-white/10 bg-black/60 px-2.5 py-1.5 text-xs text-white font-mono"
-                />
-              </div>
-
-              <div className="rounded-xl border border-white/[0.05] bg-black/40 p-2.5">
-                <label className="text-[10px] font-mono text-zinc-400 block mb-1">Post. SX [20.5-26.5]</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  min="20.5"
-                  max="26.5"
-                  value={getParamValue("rear_left_psi", 20.5)}
-                  onChange={(e) => setParamValue("rear_left_psi", e.target.value)}
-                  className="w-full rounded-lg border border-white/10 bg-black/60 px-2.5 py-1.5 text-xs text-white font-mono"
-                />
-              </div>
-
-              <div className="rounded-xl border border-white/[0.05] bg-black/40 p-2.5">
-                <label className="text-[10px] font-mono text-zinc-400 block mb-1">Post. DX [20.5-26.5]</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  min="20.5"
-                  max="26.5"
-                  value={getParamValue("rear_right_psi", 20.5)}
-                  onChange={(e) => setParamValue("rear_right_psi", e.target.value)}
-                  className="w-full rounded-lg border border-white/10 bg-black/60 px-2.5 py-1.5 text-xs text-white font-mono"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
+      <div className="flex gap-6 border-b border-white/10">
+        {SETUP_TABS.map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => setActiveTab(tab.key)}
+            className={`border-b-2 px-1 py-3 text-sm font-semibold transition ${
+              activeTab === tab.key
+                ? "border-violet-400 text-white"
+                : "border-transparent text-zinc-500 hover:text-white"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
-      {/* Floating Save Bar */}
-      <div className="flex justify-end pt-2">
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={saving}
-          className="inline-flex items-center gap-2 rounded-xl bg-white px-8 py-3 text-xs font-black uppercase tracking-wider text-black transition hover:bg-zinc-200 disabled:opacity-50 shadow-lg cursor-pointer active:scale-95"
-        >
-          <Save size={15} />
-          <span>{saving ? "Salvataggio in corso..." : "Salva Modifiche Setup"}</span>
-        </button>
+      <div className="divide-y divide-white/10">
+        {SETUP_SECTIONS.map((section) => (
+          <section key={section.title} className="py-5 first:pt-0">
+            <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-zinc-400">
+              {section.title}
+            </h3>
+            <div className="space-y-5">
+              {section.fields.map((field) => {
+                const value = getParamValue(field.suffix, field.default);
+                return (
+                  <div key={field.suffix} className="space-y-2">
+                    <div className="flex items-center justify-between gap-4">
+                      <label
+                        htmlFor={`setup-${field.suffix}`}
+                        className="text-sm text-zinc-200"
+                      >
+                        {field.label}
+                      </label>
+                      <output
+                        htmlFor={`setup-${field.suffix}`}
+                        className="min-w-16 text-right font-mono text-sm font-semibold tabular-nums text-white"
+                      >
+                        {value}{field.unit}
+                      </output>
+                    </div>
+                    <input
+                      id={`setup-${field.suffix}`}
+                      type="range"
+                      min={field.min}
+                      max={field.max}
+                      step={field.step}
+                      value={value}
+                      onChange={(event) => setParamValue(field.suffix, event.target.value)}
+                      className="w-full cursor-pointer accent-violet-400"
+                    />
+                    <div className="flex justify-between font-mono text-[10px] text-zinc-600">
+                      <span>{field.min}{field.unit}</span>
+                      <span>{field.max}{field.unit}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        ))}
       </div>
     </div>
   );
