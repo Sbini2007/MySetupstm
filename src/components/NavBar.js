@@ -95,31 +95,32 @@ export default function NavBar() {
               </div>
             </Link>
 
-            {/* Desktop Navigation Links */}
-            <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-10 text-xs font-bold tracking-wider text-zinc-300 lg:flex">
-              <Link
-                href="/"
-                className="hover:text-violet-400 transition duration-150 py-1"
-              >
-                HOME
-              </Link>
-              <Link
-                href="/setups"
-                className="hover:text-violet-400 transition duration-150 py-1"
-              >
-                SETUP
-              </Link>
-              <a
-                href="https://discord.gg/YzVN3ncCwR"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1 hover:text-violet-400 transition duration-150 py-1"
-              >
-                <span>DISCORD</span>
-                <ArrowUpRight size={12} />
-              </a>
-            </nav>
           </div>
+
+          {/* Desktop Navigation Links */}
+          <nav className="ml-auto mr-8 hidden items-center gap-10 text-xs font-bold tracking-wider text-zinc-300 lg:flex">
+            <Link
+              href="/"
+              className="hover:text-violet-400 transition duration-150 py-1"
+            >
+              HOME
+            </Link>
+            <Link
+              href="/setups"
+              className="hover:text-violet-400 transition duration-150 py-1"
+            >
+              SETUP
+            </Link>
+            <a
+              href="https://discord.gg/YzVN3ncCwR"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 hover:text-violet-400 transition duration-150 py-1"
+            >
+              <span>DISCORD</span>
+              <ArrowUpRight size={12} />
+            </a>
+          </nav>
 
           {/* Right Action Buttons */}
           <div className="flex items-center gap-2 sm:gap-3">
