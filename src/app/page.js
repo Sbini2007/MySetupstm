@@ -129,7 +129,7 @@ export default function HomePage() {
 
                 <div className="shrink-0 self-start md:self-center">
                   <Link
-                    href={`/track/${latestUpdate.slug}`}
+                    href="/setups"
                     className="group inline-flex items-center gap-2 rounded-xl bg-[#7048ff] px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-violet-950/25 transition duration-200 hover:-translate-y-0.5 hover:bg-[#805dff] hover:shadow-violet-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090a12] motion-reduce:transform-none motion-reduce:transition-none"
                   >
                     <span>Vedi Pista Aggiornata</span>
