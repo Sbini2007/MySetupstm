@@ -41,9 +41,6 @@ export default function ReviewsPage() {
                 </p>
               </div>
 
-              <div className="mt-6 border-t border-white/[0.05] pt-3 flex items-center justify-between text-xs">
-                <span className="text-[11px] font-mono uppercase tracking-wider text-violet-300/80">{rev.track}</span>
-              </div>
             </div>
           ))}
         </div>

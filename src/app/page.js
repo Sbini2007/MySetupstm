@@ -188,9 +188,6 @@ export default function HomePage() {
                   <p className="mt-5 flex-1 text-xs leading-relaxed text-zinc-300 sm:text-[13px]">
                     “{review.text}”
                   </p>
-                  <div className="mt-5 border-t border-white/[0.08] pt-3">
-                    <p className="text-[10px] font-mono uppercase tracking-wider text-violet-300/80">{review.track}</p>
-                  </div>
                 </div>
               </article>
             ))}
