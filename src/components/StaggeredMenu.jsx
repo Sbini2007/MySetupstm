@@ -127,17 +127,12 @@ export const StaggeredMenu = ({
             >
               {/* Top bar inside sliding panel */}
               <div className="sm-panel-topbar">
-                <div className="flex items-center gap-2.5">
-                  <div className="relative h-32 w-32 shrink-0">
+                <div className="relative h-52 w-52 shrink-0">
                     <Image
                       src={logoImg}
                       alt="MySetups"
-                      className="h-full w-full scale-[1.8] object-contain"
+                      className="h-full w-full scale-[2] object-contain"
                     />
-                  </div>
-                  <span className="font-sans text-xs font-black tracking-tight text-white uppercase">
-                    MySetups F1 26
-                  </span>
                 </div>
 
                 <button
