@@ -88,7 +88,7 @@ export default function NavBar() {
                 <Image
                   src={logoImg}
                   alt="MySetups"
-                  className="h-full w-full scale-[1.25] object-contain"
+                  className="h-full w-full scale-[1.15] object-contain"
                   priority
                 />
               </div>
