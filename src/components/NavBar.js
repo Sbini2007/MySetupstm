@@ -81,11 +81,11 @@ export default function NavBar() {
             : "bg-[#090a12]/85 backdrop-blur-sm border-b border-violet-400/[0.08] py-1.5"
         }`}
       >
-        <div className="mx-auto flex h-20 max-w-6xl items-center justify-between px-4 sm:px-6">
+        <div className="relative mx-auto flex h-20 max-w-6xl items-center justify-between px-4 sm:px-6">
           {/* Brand Logo */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center gap-3 group">
-              <div className="relative h-16 w-16 transition-transform duration-200 group-hover:scale-105">
+              <div className="relative h-20 w-20 transition-transform duration-200 group-hover:scale-105">
                 <Image
                   src={logoImg}
                   alt="MySetups"
@@ -96,7 +96,7 @@ export default function NavBar() {
             </Link>
 
             {/* Desktop Navigation Links */}
-            <nav className="hidden lg:flex items-center gap-6 text-xs font-bold tracking-wider text-zinc-300">
+            <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-10 text-xs font-bold tracking-wider text-zinc-300 lg:flex">
               <Link
                 href="/"
                 className="hover:text-violet-400 transition duration-150 py-1"
