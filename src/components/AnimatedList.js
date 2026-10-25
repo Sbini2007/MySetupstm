@@ -19,9 +19,12 @@ export default function AnimatedList({
 }) {
   const [internalSelectedIndex, setInternalSelectedIndex] = useState(initialSelectedIndex);
 
-  const activeIndex = selectedId
-    ? items.findIndex((it) => it.id === selectedId || it.slug === selectedId)
-    : internalSelectedIndex;
+  const activeIndex =
+    selectedId !== undefined
+      ? selectedId === null
+        ? -1
+        : items.findIndex((it) => it.id === selectedId || it.slug === selectedId)
+      : internalSelectedIndex;
 
   const handleSelect = useCallback(
     (item, index) => {

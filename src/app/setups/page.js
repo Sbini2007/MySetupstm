@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { Search } from "lucide-react";
 import NavBar from "@/components/NavBar";
 import Footer from "@/components/Footer";
@@ -10,12 +11,17 @@ import { tracks } from "@/lib/data";
 import { safeFetchJson } from "@/lib/safe-json";
 
 export default function SetupsPage() {
+  const pathname = usePathname();
   const [search, setSearch] = useState("");
   const [selectedSlug, setSelectedSlug] = useState(null);
   const [setupsBySlug, setSetupsBySlug] = useState({});
   const [isAuthorized, setIsAuthorized] = useState(null);
   const [setupError, setSetupError] = useState(false);
   const setupRequestId = useRef(0);
+
+  useEffect(() => {
+    if (pathname === "/setups") setSelectedSlug(null);
+  }, [pathname]);
 
   const fetchSetups = useCallback(async () => {
     const requestId = ++setupRequestId.current;
@@ -147,6 +153,7 @@ export default function SetupsPage() {
             <div className="lg:col-span-7">
               {selectedTrack ? (
                 <SetupDisplay
+                  key={selectedTrack.slug}
                   setup={setupsBySlug[selectedSlug] || null}
                   isAuthorized={isAuthorized}
                   loadError={setupError}

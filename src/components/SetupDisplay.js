@@ -16,7 +16,7 @@ export default function SetupDisplay({
   slug = "italy-monza",
   track,
 }) {
-  const [activeTab, setActiveTab] = useState("race");
+  const [activeTab, setActiveTab] = useState("quali");
 
   const currentTrack = useMemo(() => {
     if (track) return track;
