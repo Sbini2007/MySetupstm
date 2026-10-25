@@ -96,8 +96,8 @@ export default function AdminSetupEditor() {
   if (!currentTrack) return null;
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="space-y-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <Image
             src={`/flags/${currentTrack.flagCode}.svg`}
@@ -113,7 +113,7 @@ export default function AdminSetupEditor() {
             aria-label="Circuito"
             value={selectedSlug}
             onChange={(event) => setSelectedSlug(event.target.value)}
-            className="min-w-0 rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white outline-none"
+            className="min-w-0 rounded-md border border-white/10 bg-transparent px-2.5 py-1.5 text-xs text-white outline-none"
           >
             {tracks.map((track) => (
               <option key={track.slug} value={track.slug} className="bg-[#0c0d16]">
@@ -124,7 +124,7 @@ export default function AdminSetupEditor() {
           <button
             type="button"
             onClick={handleResetToDefault}
-            className="px-2 py-2 text-sm text-zinc-400 transition hover:text-white"
+            className="px-2 py-1.5 text-xs text-zinc-400 transition hover:text-white"
           >
             Reset
           </button>
@@ -132,7 +132,7 @@ export default function AdminSetupEditor() {
             type="button"
             onClick={handleSave}
             disabled={saving || !draft}
-            className="rounded-lg bg-white px-4 py-2 text-sm font-bold text-black transition hover:bg-zinc-200 disabled:opacity-50"
+            className="rounded-md bg-white px-3 py-1.5 text-xs font-bold text-black transition hover:bg-zinc-200 disabled:opacity-50"
           >
             {saving ? "Salvataggio..." : "Salva"}
           </button>
@@ -145,13 +145,13 @@ export default function AdminSetupEditor() {
         </p>
       )}
 
-      <div className="flex gap-6 border-b border-white/10">
+      <div className="flex gap-4 border-b border-white/10">
         {SETUP_TABS.map((tab) => (
           <button
             key={tab.key}
             type="button"
             onClick={() => setActiveTab(tab.key)}
-            className={`border-b-2 px-1 py-3 text-sm font-semibold transition ${
+            className={`border-b-2 px-1 py-2 text-xs font-semibold transition ${
               activeTab === tab.key
                 ? "border-violet-400 text-white"
                 : "border-transparent text-zinc-500 hover:text-white"
@@ -164,25 +164,25 @@ export default function AdminSetupEditor() {
 
       <div className="divide-y divide-white/10">
         {SETUP_SECTIONS.map((section) => (
-          <section key={section.title} className="py-5 first:pt-0">
-            <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-zinc-400">
+          <section key={section.title} className="py-3 first:pt-0">
+            <h3 className="mb-2.5 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
               {section.title}
             </h3>
-            <div className="space-y-5">
+            <div className="grid grid-cols-1 gap-x-8 gap-y-3 md:grid-cols-2">
               {section.fields.map((field) => {
                 const value = getParamValue(field.suffix, field.default);
                 return (
-                  <div key={field.suffix} className="space-y-2">
+                  <div key={field.suffix} className="space-y-0.5">
                     <div className="flex items-center justify-between gap-4">
                       <label
                         htmlFor={`setup-${field.suffix}`}
-                        className="text-sm text-zinc-200"
+                        className="truncate text-xs text-zinc-300"
                       >
                         {field.label}
                       </label>
                       <output
                         htmlFor={`setup-${field.suffix}`}
-                        className="min-w-16 text-right font-mono text-sm font-semibold tabular-nums text-white"
+                        className="shrink-0 text-right font-mono text-xs font-semibold tabular-nums text-white"
                       >
                         {value}{field.unit}
                       </output>
@@ -195,12 +195,8 @@ export default function AdminSetupEditor() {
                       step={field.step}
                       value={value}
                       onChange={(event) => setParamValue(field.suffix, event.target.value)}
-                      className="w-full cursor-pointer accent-violet-400"
+                      className="h-3 w-full cursor-pointer accent-violet-400"
                     />
-                    <div className="flex justify-between font-mono text-[10px] text-zinc-600">
-                      <span>{field.min}{field.unit}</span>
-                      <span>{field.max}{field.unit}</span>
-                    </div>
                   </div>
                 );
               })}
