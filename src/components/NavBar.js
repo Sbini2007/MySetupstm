@@ -84,11 +84,11 @@ export default function NavBar() {
           {/* Brand Logo */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center gap-3 group">
-              <div className="relative h-[5.5rem] w-[5.5rem] transition-transform duration-200 group-hover:scale-105">
+              <div className="relative h-[5.5rem] w-[5.5rem]">
                 <Image
                   src={logoImg}
                   alt="MySetups"
-                  className="h-full w-full object-contain"
+                  className="h-full w-full scale-[1.25] object-contain"
                   priority
                 />
               </div>

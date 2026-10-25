@@ -91,10 +91,10 @@ export default function HomePage() {
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
               <Link
                 href="/setups"
-                className="group inline-flex items-center gap-2 rounded-xl bg-[#7048ff] px-6 py-3 text-xs font-bold text-white shadow-lg shadow-violet-950/30 transition duration-200 hover:-translate-y-0.5 hover:bg-[#805dff] hover:shadow-violet-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090a12] motion-reduce:transform-none motion-reduce:transition-none sm:text-sm"
+                className="inline-flex items-center gap-2 rounded-xl border border-violet-300/20 bg-[#5a45b5] px-6 py-3 text-xs font-bold text-white shadow-md shadow-black/20 transition-colors duration-200 hover:bg-[#6750c7] active:bg-[#4c3aa0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090a12] sm:text-sm"
               >
                 <span>Esplora i Setup</span>
-                <ArrowRight size={14} className="transition-transform duration-200 group-hover:translate-x-1 motion-reduce:transition-none" />
+                <ArrowRight size={14} />
               </Link>
             </div>
           </div>
@@ -133,10 +133,10 @@ export default function HomePage() {
                 <div className="shrink-0 self-start md:self-center">
                   <Link
                     href="/setups"
-                    className="group inline-flex items-center gap-2 rounded-xl bg-[#7048ff] px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-violet-950/25 transition duration-200 hover:-translate-y-0.5 hover:bg-[#805dff] hover:shadow-violet-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090a12] motion-reduce:transform-none motion-reduce:transition-none"
+                    className="inline-flex items-center gap-2 rounded-xl border border-violet-300/20 bg-[#5a45b5] px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-black/20 transition-colors duration-200 hover:bg-[#6750c7] active:bg-[#4c3aa0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090a12]"
                   >
                     <span>Vedi Pista Aggiornata</span>
-                    <ArrowRight size={13} className="transition-transform duration-200 group-hover:translate-x-1 motion-reduce:transition-none" />
+                    <ArrowRight size={13} />
                   </Link>
                 </div>
               </div>
