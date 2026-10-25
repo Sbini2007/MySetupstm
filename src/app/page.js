@@ -3,7 +3,6 @@
 import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import logoImg from "@/assets/images/logo.png";
 import { useSession } from "@/lib/client-auth";
 import {
   Search,
@@ -24,6 +23,7 @@ import NavBar from "@/components/NavBar";
 import Footer from "@/components/Footer";
 import AnimatedList from "@/components/AnimatedList";
 import SetupDisplay from "@/components/SetupDisplay";
+import TextType from "@/components/TextType";
 import { tracks } from "@/lib/data";
 import { SETUP_TABS } from "@/lib/setup-sections";
 import { safeFetchJson } from "@/lib/safe-json";
@@ -147,18 +147,11 @@ export default function HomePage() {
             <div className="absolute inset-0 bg-gradient-to-b from-[#0d0b18]/45 via-[#07070a]/85 to-[#07070a]" />
           </div>
 
-          {/* Centered MySetups Logo with target dimensions */}
+          {/* Animated hero title replacing the centered logo */}
           <div className="relative mx-auto flex flex-col items-center">
-            <div className="relative h-[300px] w-[218px] transition-transform duration-300 hover:scale-105 sm:h-[360px] sm:w-[260px]">
-              <Image
-                src={logoImg}
-                alt="MySetups F1 26"
-                className="h-full w-full object-contain filter drop-shadow-[0_10px_30px_rgba(0,0,0,0.6)]"
-                priority
-              />
-            </div>
+            <TextType />
 
-            <p className="mt-6 text-sm sm:text-base text-zinc-400 max-w-2xl mx-auto leading-relaxed">
+            <p className="mt-5 text-sm sm:text-base text-zinc-400 max-w-2xl mx-auto leading-relaxed">
               L'hub di riferimento per gli assetti competitivi su <strong className="text-zinc-200">F1 26</strong>. 
               Configurazioni tecniche su misura per tutti i 25 circuiti, calibrate con precisione per Qualifica, Gara e Parco Chiuso.
             </p>
