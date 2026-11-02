@@ -89,10 +89,10 @@ export default function HomePage() {
 
         <section aria-label="Ultimo setup aggiornato" className="mx-auto w-full max-w-6xl px-4 pb-12 sm:px-6 lg:px-8">
           <div className="py-2">
-            <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-              <div>
+            <div className="flex flex-col items-center gap-6 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
+              <div className="flex w-full justify-center sm:w-auto sm:justify-start">
                 {latestUpdate ? (
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center justify-center gap-4 text-left">
                     <div className="relative h-12 w-16 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-black/40">
                       <Image
                         src={`/flags/${latestUpdate.flagCode}.svg`}
@@ -109,12 +109,12 @@ export default function HomePage() {
                     </div>
                   </div>
                 ) : (
-                  <p className="text-sm text-zinc-400">Scopri gli assetti disponibili per preparare il prossimo weekend di gara.</p>
+                  <p className="max-w-sm text-center text-sm text-zinc-400">Scopri gli assetti disponibili per preparare il prossimo weekend di gara.</p>
                 )}
               </div>
               <Link
                 href="/setups"
-                className="home-setups-cta inline-flex w-fit shrink-0 items-center text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
+                className="home-setups-cta inline-flex w-fit shrink-0 items-center justify-center text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
               >
                 <span className="home-setups-cta__label">Tutti i setup</span>
                 <ArrowRight className="home-setups-cta__icon" size={16} aria-hidden="true" />
@@ -204,8 +204,8 @@ export default function HomePage() {
         </section>
 
         <section aria-labelledby="community-heading" className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
-          <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
-            <div className="max-w-xl">
+          <div className="flex flex-col items-center gap-8 text-center lg:flex-row lg:items-center lg:justify-between lg:text-left">
+            <div className="w-full max-w-xl lg:w-auto">
               <h2 id="community-heading" className="text-2xl font-extrabold tracking-tight text-white sm:text-4xl">
                 Entra nel Discord di MySetups
               </h2>
@@ -219,7 +219,7 @@ export default function HomePage() {
               target="_blank"
               rel="noreferrer"
               aria-label="Partecipa alla community MySetups su Discord"
-              className="home-setups-cta home-discord-cta inline-flex w-fit shrink-0 items-center rounded-none bg-transparent px-4 py-3 text-white active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#aab0ff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#090a12]"
+              className="home-setups-cta home-discord-cta mx-auto inline-flex w-fit shrink-0 translate-x-1 self-center items-center justify-center rounded-none bg-transparent px-4 py-3 text-white active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#aab0ff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#090a12] lg:mx-0 lg:translate-x-0 lg:self-auto"
             >
               <span className="home-setups-cta__label">Partecipa</span>
               <ArrowRight className="home-setups-cta__icon" size={16} aria-hidden="true" />

@@ -274,7 +274,7 @@
   background: transparent;
   padding: 0.333cqw 0.75cqw;
   color: #d4d4d8;
-  font-size: clamp(0.3rem, 0.917cqw, 0.75rem);
+  font-size: 0.917cqw;
   font-weight: 700;
   letter-spacing: 0.075em;
   line-height: 1.25;
