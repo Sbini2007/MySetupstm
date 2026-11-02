@@ -8,8 +8,14 @@ import { clampValue, SETUP_SECTIONS } from "@/lib/setup-sections";
 
 const FILE = path.join(process.cwd(), "data", "track-setups.json");
 const SETUP_PREFIXES = ["race", "quali", "parc_ferme"];
+const SETUP_CACHE_TTL_MS = 5000;
 let databaseClient;
 let databaseSetup;
+let cachedSetups = null;
+let cachedSetupsUntil = 0;
+let setupLoadPromise = null;
+let setupLoadPromiseVersion = 0;
+let setupCacheVersion = 0;
 const NUMERIC_SETUP_FIELDS = SETUP_SECTIONS.flatMap((section) =>
   section.fields.map((field) => field.suffix)
 );
@@ -26,6 +32,12 @@ function readFile() {
 function writeFile(data) {
   fs.mkdirSync(path.dirname(FILE), { recursive: true });
   fs.writeFileSync(FILE, JSON.stringify(data, null, 2), "utf8");
+}
+
+function invalidateSetupCache() {
+  setupCacheVersion += 1;
+  cachedSetups = null;
+  cachedSetupsUntil = 0;
 }
 
 function normaliseUpdatedAt(value) {
@@ -146,6 +158,7 @@ async function writeStoredSetup(slug, setup) {
     const all = await readStoredSetups();
     all[slug] = setup;
     writeFile(all);
+    invalidateSetupCache();
     return;
   }
 
@@ -156,12 +169,14 @@ async function writeStoredSetup(slug, setup) {
     ON CONFLICT (slug)
     DO UPDATE SET setup = EXCLUDED.setup
   `;
+  invalidateSetupCache();
 }
 
 async function writeStoredSetups(setups) {
   const sql = getDatabase();
   if (!sql) {
     writeFile(setups);
+    invalidateSetupCache();
     return;
   }
 
@@ -175,6 +190,7 @@ async function writeStoredSetups(setups) {
     `
   );
   if (queries.length) await sql.transaction(queries);
+  invalidateSetupCache();
 }
 
 function getAllWithDefaults(data) {
@@ -233,7 +249,39 @@ function getLatestTrackUpdateFromSetups(all) {
 }
 
 export async function getAllTrackSetups() {
-  return getAllWithDefaults(await readStoredSetups());
+  if (cachedSetups && Date.now() < cachedSetupsUntil) {
+    return structuredClone(cachedSetups);
+  }
+  if (setupLoadPromise) {
+    const loadVersion = setupLoadPromiseVersion;
+    const setups = await setupLoadPromise;
+    return loadVersion === setupCacheVersion
+      ? structuredClone(setups)
+      : getAllTrackSetups();
+  }
+
+  const cacheVersion = setupCacheVersion;
+  const loadPromise = (async () => {
+    const setups = getAllWithDefaults(await readStoredSetups());
+    if (cacheVersion === setupCacheVersion) {
+      cachedSetups = setups;
+      cachedSetupsUntil = Date.now() + SETUP_CACHE_TTL_MS;
+    }
+    return setups;
+  })();
+  setupLoadPromise = loadPromise;
+  setupLoadPromiseVersion = cacheVersion;
+
+  try {
+    const setups = await loadPromise;
+    if (cacheVersion !== setupCacheVersion) {
+      if (setupLoadPromise === loadPromise) setupLoadPromise = null;
+      return getAllTrackSetups();
+    }
+    return structuredClone(setups);
+  } finally {
+    if (setupLoadPromise === loadPromise) setupLoadPromise = null;
+  }
 }
 
 export async function getTrackSetupFlat(slug) {
@@ -310,7 +358,27 @@ export async function createTrackSetup(slug, customData = {}) {
 }
 
 export async function getLatestTrackUpdate() {
-  return getLatestTrackUpdateFromSetups(await readStoredSetups());
+  if (cachedSetups && Date.now() < cachedSetupsUntil) {
+    return getLatestTrackUpdateFromSetups(cachedSetups);
+  }
+
+  const sql = getDatabase();
+  if (sql) {
+    await ensureDatabase(sql);
+    const rows = await sql`
+      SELECT slug, setup
+      FROM mysetups_track_setups
+      WHERE setup->>'updatedAt' IS NOT NULL
+      ORDER BY setup->>'updatedAt' DESC
+      LIMIT 1
+    `;
+    if (rows.length) {
+      return getLatestTrackUpdateFromSetups({ [rows[0].slug]: rows[0].setup });
+    }
+  }
+
+  const setups = await getAllTrackSetups();
+  return getLatestTrackUpdateFromSetups(setups);
 }
 
 export async function saveAllTrackSetups(all) {

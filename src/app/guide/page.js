@@ -49,7 +49,6 @@ export default function GuidePage() {
             </p>
           </div>
 
-          {loading ? <p className="text-sm text-zinc-400">Caricamento guide…</p> : null}
           {error ? <p role="alert" className="text-sm text-red-300">{error}</p> : null}
           {!loading && !error ? (
             <nav aria-label="Indice guide">

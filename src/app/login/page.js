@@ -292,9 +292,6 @@ function LoginFallback() {
     <div className="min-h-screen bg-[#050508] text-white">
       <NavBar />
       <main className="mx-auto flex min-h-[80vh] max-w-md items-center justify-center px-4 py-16">
-        <div className="w-full rounded-3xl border border-white/10 bg-[#0c0d16] p-8 text-center text-xs text-white/50 font-mono">
-          Caricamento autenticazione…
-        </div>
       </main>
       <Footer />
     </div>

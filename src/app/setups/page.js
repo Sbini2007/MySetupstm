@@ -8,6 +8,7 @@ import Footer from "@/components/Footer";
 import SetupDisplay from "@/components/SetupDisplay";
 import AnimatedList from "@/components/AnimatedList";
 import { tracks } from "@/lib/data";
+import { formatRelativeTime } from "@/lib/relative-time";
 import { safeFetchJson } from "@/lib/safe-json";
 
 export default function SetupsPage() {
@@ -72,6 +73,9 @@ export default function SetupsPage() {
     () => tracks.find((track) => track.slug === selectedSlug) || null,
     [selectedSlug]
   );
+  const selectedSetup = selectedTrack ? setupsBySlug[selectedTrack.slug] : null;
+  const selectedSetupUpdatedAt = setupError ? null : selectedSetup?.updatedAt;
+  const selectedSetupUpdate = formatRelativeTime(selectedSetupUpdatedAt);
 
   const handleTrackSelect = useCallback((item) => {
     if (window.matchMedia("(max-width: 1023px), (pointer: coarse)").matches) {
@@ -138,8 +142,16 @@ export default function SetupsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             {/* Left Column: AnimatedList */}
             <div className="lg:col-span-5 flex flex-col gap-2">
-              <div className="px-1 pb-1 text-xs text-zinc-300">
+              <div className="flex items-center justify-between gap-3 px-1 pb-1 text-xs text-zinc-300">
                 <span className="font-semibold">Seleziona circuito</span>
+                {selectedSetupUpdate ? (
+                  <span
+                    className="text-right text-[10px] text-zinc-500"
+                    title={new Date(selectedSetupUpdatedAt).toLocaleString("it-IT")}
+                  >
+                    Ultimo aggiornamento {selectedSetupUpdate}
+                  </span>
+                ) : null}
               </div>
 
               <AnimatedList
@@ -154,6 +166,7 @@ export default function SetupsPage() {
                 frame={true}
                 displayScrollbar={true}
                 enableArrowNavigation={true}
+                animateOnce={false}
               />
             </div>
             {/* Right Column: Full Setup Display Sheet */}
@@ -161,7 +174,7 @@ export default function SetupsPage() {
               {selectedTrack ? (
                 <SetupDisplay
                   key={selectedTrack.slug}
-                  setup={setupsBySlug[selectedSlug] || null}
+                  setup={selectedSetup || null}
                   isAuthorized={isAuthorized}
                   loadError={setupError}
                   onRetry={fetchSetups}

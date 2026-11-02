@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
-  Quote,
 } from "lucide-react";
 import NavBar from "@/components/NavBar";
 import Footer from "@/components/Footer";
@@ -53,7 +52,7 @@ export default function HomePage() {
         <NavBar />
 
         {/* ================= HERO SECTION ================= */}
-        <section className="relative mx-auto max-w-5xl overflow-hidden px-4 pt-36 pb-28 text-center sm:px-6 sm:pt-40 sm:pb-32 lg:px-8">
+        <section className="relative mx-auto max-w-5xl overflow-hidden px-4 pt-36 pb-20 text-center sm:px-6 sm:pt-40 sm:pb-24 lg:px-8">
           {/* Hero Background Atmosphere */}
           <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
             <Image
@@ -88,32 +87,29 @@ export default function HomePage() {
           </div>
         </section>
 
-        <div className="relative w-full border-t border-white/[0.06] bg-gradient-to-b from-[#0d0b18] via-[#090a12] to-[#090a12]">
-
-        <div className="flex flex-col">
-        <section aria-labelledby="latest-heading" className="order-1 mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
+        <section aria-label="Ultimo setup aggiornato" className="mx-auto w-full max-w-6xl px-4 pb-12 sm:px-6 lg:px-8">
           <div className="py-2">
             <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 {latestUpdate ? (
                   <div className="flex items-center gap-4">
                     <div className="relative h-12 w-16 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-black/40">
-                  <Image
-                    src={`/flags/${latestUpdate.flagCode}.svg`}
-                    alt=""
-                    width={48}
-                    height={32}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
+                      <Image
+                        src={`/flags/${latestUpdate.flagCode}.svg`}
+                        alt=""
+                        width={48}
+                        height={32}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
                     <div className="min-w-0">
-                      <h3 className="truncate text-lg font-bold text-white">{latestUpdate.circuit}</h3>
+                      <h2 className="truncate text-lg font-bold text-white">{latestUpdate.circuit}</h2>
                       <p className="mt-1 text-xs font-medium text-zinc-400">{latestUpdate.country}</p>
                       <p className="mt-1 text-xs text-zinc-500">{formattedUpdateDate}</p>
                     </div>
                   </div>
                 ) : (
-                  <p className="mt-3 text-sm text-zinc-400">Scopri gli assetti disponibili per preparare il prossimo weekend di gara.</p>
+                  <p className="text-sm text-zinc-400">Scopri gli assetti disponibili per preparare il prossimo weekend di gara.</p>
                 )}
               </div>
               <Link
@@ -127,20 +123,23 @@ export default function HomePage() {
           </div>
         </section>
 
+        <div className="relative w-full border-t border-white/[0.06] bg-gradient-to-b from-[#0d0b18] via-[#090a12] to-[#090a12]">
+
+        <div className="flex flex-col">
         <section aria-labelledby="categories-heading" className="order-2 mx-auto w-full max-w-6xl px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
           <div className="mb-8 max-w-2xl">
             <h2 id="categories-heading" className="text-2xl font-black tracking-tight text-white sm:text-3xl">
               Tutto quello che ti serve per la pista
             </h2>
             <p className="mt-3 text-sm leading-relaxed text-zinc-400">
-              Setup e guide per capire e perfezionare il tuo assetto.
+              Setup e guide per capire e perfezionare il tuo assetto in setup competitivi e guide su come adattare l'assetto al proprio stile di guida.
             </p>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
             {[
-              { title: "Setup", description: "Assetti pronti da provare e perfezionare.", href: "/setups" },
-              { title: "Guide", description: "Consigli pratici per capire e migliorare ogni assetto.", href: "/guide" },
+              { title: "Setup", description: "Assetti competitivi aggiornati settimanalmente.", href: "/setups" },
+              { title: "Guide", description: "Consigli per migliorare ogni assetto al proprio stile di guida.", href: "/guide" },
             ].map(({ title, description, href }) => (
               <Link
                 key={title}
@@ -185,7 +184,14 @@ export default function HomePage() {
                   }}
                 />
                 <div className="relative flex h-full flex-1 flex-col">
-                  <Quote size={17} className="text-violet-300/70" aria-hidden="true" />
+                  <Image
+                    src="/assets/review-avatar.png"
+                    alt=""
+                    width={36}
+                    height={36}
+                    className="h-9 w-9 rounded-full object-cover"
+                    aria-hidden="true"
+                  />
                   <p className="mt-5 flex-1 text-xs leading-relaxed text-zinc-300 sm:text-[13px]">
                     “{review.text}”
                   </p>
@@ -212,20 +218,11 @@ export default function HomePage() {
               href="https://discord.gg/YzVN3ncCwR"
               target="_blank"
               rel="noreferrer"
-              aria-label="Unisciti alla community MySetups su Discord"
-              className="group relative inline-flex h-13 w-36 shrink-0 items-center justify-center rounded-[15px] bg-[#5865F2] text-base font-black text-white fill-white hover:bg-[#5865F2] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#aab0ff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#090a12] motion-reduce:transition-none"
+              aria-label="Partecipa alla community MySetups su Discord"
+              className="home-setups-cta home-discord-cta inline-flex w-fit shrink-0 items-center rounded-none bg-transparent px-4 py-3 text-white active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#aab0ff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#090a12]"
             >
-              <span className="absolute left-4 top-1/2 flex -translate-y-1/2 items-center justify-center transition-[left,transform] duration-500 ease-in-out group-hover:left-1/2 group-hover:-translate-x-1/2 group-focus-visible:left-1/2 group-focus-visible:-translate-x-1/2 motion-reduce:transition-none">
-                <svg
-                  aria-hidden="true"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  className="h-6 w-6 shrink-0 origin-center transition-transform duration-300 ease-in-out group-hover:scale-110 group-focus-visible:scale-110 motion-reduce:transition-none"
-                >
-                  <path d="M19.73 5.19a18.2 18.2 0 0 0-4.47-1.38.07.07 0 0 0-.07.04c-.19.34-.4.79-.55 1.14a16.8 16.8 0 0 0-5.03 0 11.6 11.6 0 0 0-.56-1.14.07.07 0 0 0-.07-.04 18.15 18.15 0 0 0-4.47 1.38.06.06 0 0 0-.03.03C1.6 9.35.82 13.38 1.21 17.36a.08.08 0 0 0 .03.05 18.3 18.3 0 0 0 5.48 2.77.07.07 0 0 0 .08-.03c.42-.57.79-1.17 1.11-1.8a.07.07 0 0 0-.04-.1 12.1 12.1 0 0 1-1.71-.82.07.07 0 0 1-.01-.11l.34-.27a.07.07 0 0 1 .07-.01c3.59 1.64 7.48 1.64 11.03 0a.07.07 0 0 1 .07.01l.34.27a.07.07 0 0 1-.01.11c-.55.32-1.12.6-1.71.82a.07.07 0 0 0-.04.1c.33.63.7 1.23 1.11 1.8a.07.07 0 0 0 .08.03 18.25 18.25 0 0 0 5.49-2.77.07.07 0 0 0 .03-.05c.47-4.6-.79-8.6-3.27-12.14a.06.06 0 0 0-.03-.03ZM8.31 14.6c-1.08 0-1.97-.99-1.97-2.2s.87-2.2 1.97-2.2c1.11 0 1.99 1 1.97 2.2 0 1.21-.87 2.2-1.97 2.2Zm7.38 0c-1.08 0-1.97-.99-1.97-2.2s.87-2.2 1.97-2.2c1.11 0 1.99 1 1.97 2.2 0 1.21-.86 2.2-1.97 2.2Z" />
-                </svg>
-              </span>
-              <span className="flex h-full w-full translate-x-3 items-center justify-center transition-opacity duration-500 ease-in-out group-hover:opacity-0 group-focus-visible:opacity-0 motion-reduce:transition-none">Partecipa</span>
+              <span className="home-setups-cta__label">Partecipa</span>
+              <ArrowRight className="home-setups-cta__icon" size={16} aria-hidden="true" />
             </a>
           </div>
         </section>

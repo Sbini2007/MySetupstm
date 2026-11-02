@@ -91,6 +91,14 @@ export default function AnimatedList({
               queuedIndexesRef.current.add(index);
             }
           } else if (!animateOnce) {
+            const rootBounds = entry.rootBounds || listRef.current?.getBoundingClientRect();
+            const itemBounds = entry.boundingClientRect;
+            const isFullyOutside =
+              !rootBounds ||
+              itemBounds.bottom <= rootBounds.top ||
+              itemBounds.top >= rootBounds.bottom;
+            if (!isFullyOutside) return;
+
             visibleItemsRef.current.delete(index);
             queuedIndexesRef.current.delete(index);
             revealQueueRef.current = revealQueueRef.current.filter((queuedIndex) => queuedIndex !== index);
@@ -102,7 +110,7 @@ export default function AnimatedList({
       },
       {
         root: listRef.current,
-        threshold: 0.18,
+        threshold: 0.01,
       }
     );
 

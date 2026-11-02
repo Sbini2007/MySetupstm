@@ -57,7 +57,6 @@ export default function GuideDetailPage() {
               Indice guide
             </Link>
 
-            {loading ? <p className="mt-10 text-sm text-zinc-400">Caricamento guida…</p> : null}
             {error ? <p role="alert" className="mt-10 text-sm text-red-300">{error}</p> : null}
             {guide ? (
               <article className="mt-10">

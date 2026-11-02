@@ -5,7 +5,6 @@ import Image from "next/image";
 import { ArrowLeft, Lock } from "lucide-react";
 import { PARAM_LIMITS, SETUP_TABS, tabToPrefix } from "@/lib/setup-sections";
 import { tracks } from "@/lib/data";
-import { formatRelativeTime } from "@/lib/relative-time";
 
 export default function SetupDisplay({
   setup,
@@ -33,7 +32,6 @@ export default function SetupDisplay({
     const index = tracks.findIndex((item) => item.slug === currentTrack.slug);
     return index >= 0 ? index + 1 : 1;
   }, [currentTrack]);
-  const relativeUpdate = formatRelativeTime(setup?.updatedAt);
 
   if (isAuthorized === false) {
     return (
@@ -69,11 +67,7 @@ export default function SetupDisplay({
   }
 
   if (!setup) {
-    return (
-      <div className="flex min-h-40 items-center justify-center border-y border-white/10">
-        <p className="text-xs font-mono text-zinc-400">Caricamento setup per {currentTrack.circuit}...</p>
-      </div>
-    );
+    return <div aria-hidden="true" className="min-h-40" />;
   }
 
   const prefix = tabToPrefix(activeTab);
@@ -162,18 +156,10 @@ export default function SetupDisplay({
             />
           )}
           <div className="min-w-0">
-            <p className="text-[10px] font-mono uppercase tracking-wider text-zinc-400">
+            <p className="text-[10px] font-sans uppercase tracking-wider text-zinc-400">
               Round {String(trackIndex).padStart(2, "0")} · {currentTrack.country}
             </p>
             <h2 className="truncate text-lg font-black tracking-tight text-white">{currentTrack.circuit}</h2>
-            {relativeUpdate && (
-              <p
-                className="mt-1 text-[10px] text-zinc-500"
-                title={new Date(setup.updatedAt).toLocaleString("it-IT")}
-              >
-                Ultimo aggiornamento {relativeUpdate}
-              </p>
-            )}
           </div>
         </div>
       </div>
@@ -217,7 +203,7 @@ export default function SetupDisplay({
                   <div key={key} className="rounded-lg border border-white/[0.04] bg-white/[0.025] px-3 py-2.5">
                     <div className="flex items-center justify-between gap-3">
                       <dt className="min-w-0 text-xs leading-relaxed text-zinc-300">{label}</dt>
-                      <dd className="shrink-0 font-mono text-xs font-semibold tabular-nums text-white">
+                      <dd className="shrink-0 font-sans text-xs font-semibold tabular-nums text-white">
                         {rowValue}{unit}
                       </dd>
                     </div>

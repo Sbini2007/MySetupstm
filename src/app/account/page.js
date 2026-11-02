@@ -76,9 +76,7 @@ export default function AccountPage() {
           </div>
 
           {status === "loading" ? (
-            <p className="py-10 text-sm text-zinc-400">
-              Verifica dell'account in corso...
-            </p>
+            null
           ) : user ? (
             /* Logged in state */
             <div className="max-w-3xl">

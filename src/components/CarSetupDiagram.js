@@ -12,16 +12,9 @@ const setupComponents = [
   {
     label: "Trasmissione",
     topic: "trasmissione",
-    path: "M 29 56 L 29 13 L 35 13",
-    labelPosition: { left: "35%", top: "13%" },
-    anchor: { left: "29%", top: "56%" },
-  },
-  {
-    label: "Geometria sospensioni",
-    topic: "geometria-sospensioni",
-    path: "M 53 49 L 53 9 L 57 9",
-    labelPosition: { left: "57%", top: "9%" },
-    anchor: { left: "53%", top: "49%" },
+    path: "M 25 48 L 25 6 L 31 6",
+    labelPosition: { left: "31%", top: "6%" },
+    anchor: { left: "25%", top: "48%" },
   },
   {
     label: "Sospensioni",

@@ -27,14 +27,7 @@ export default function AuthGate({ children, requirePremium = false, requireGuid
   }, [ready, status, router]);
 
   if (!ready || status === "loading") {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center px-4 py-20 text-white">
-        <div className="max-w-md rounded-3xl border border-white/10 bg-[#0c0d16] p-10 text-center shadow-2xl">
-          <span className="font-mono text-xs uppercase tracking-widest text-violet-400">Verifica Sessione</span>
-          <p className="mt-3 text-sm text-white/50">Caricamento autorizzazioni pilota…</p>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   if (status === "unauthenticated") {

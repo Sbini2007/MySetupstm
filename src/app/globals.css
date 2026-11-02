@@ -209,6 +209,10 @@
   transition: transform 0.25s ease-out;
 }
 
+.home-discord-cta .home-setups-cta__label::after {
+  background: #fff;
+}
+
 .home-setups-cta:hover .home-setups-cta__label::after,
 .home-setups-cta:focus-visible .home-setups-cta__label::after {
   transform: scaleX(1);
