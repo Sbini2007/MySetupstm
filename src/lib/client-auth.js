@@ -14,11 +14,13 @@ export function useAuth() {
   const { data, status, update } = useNextAuthSession();
   const user = data?.user || null;
   const isAdmin = Boolean(user?.admin || user?.role === "admin");
+  const canAccessGuides = Boolean(user?.admin || user?.guideAccess);
 
   return {
     user,
     status,
     isAdmin,
+    canAccessGuides,
     update,
     loginAsDiego: () => nextAuthSignIn("google", { callbackUrl: "/admin" }),
     logout: () => nextAuthSignOut({ callbackUrl: "/" }),

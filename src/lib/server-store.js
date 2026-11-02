@@ -3,14 +3,18 @@ import path from "path";
 import { neon } from "@neondatabase/serverless";
 import { isAdminEmail } from "@/lib/admin-emails";
 import { hashPassword, verifyPassword } from "@/lib/passwords";
+import { guides as defaultGuides } from "@/lib/data";
+import { normalizeGuides } from "@/lib/guides";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const USERS_FILE = path.join(DATA_DIR, "users.json");
+const GUIDES_FILE = path.join(DATA_DIR, "guides.json");
 const MAX_NAME_LEN = 80;
 const MAX_AVATAR_BYTES = 380_000;
 
 let databaseClient;
 let databaseSetup;
+let guidesDatabaseSetup;
 
 function getDatabase() {
   if (!process.env.DATABASE_URL) {
@@ -44,10 +48,35 @@ async function ensureDatabase(sql) {
   }
 }
 
+async function ensureGuidesDatabase(sql) {
+  if (!guidesDatabaseSetup) {
+    guidesDatabaseSetup = sql`
+      CREATE TABLE IF NOT EXISTS mysetups_guides (
+        id INTEGER PRIMARY KEY,
+        guides JSONB NOT NULL
+      )
+    `;
+  }
+
+  try {
+    await guidesDatabaseSetup;
+  } catch (error) {
+    guidesDatabaseSetup = null;
+    throw error;
+  }
+}
+
 async function withStorage(databaseOperation, fileOperation) {
   const sql = getDatabase();
   if (!sql) return fileOperation();
   await ensureDatabase(sql);
+  return databaseOperation(sql);
+}
+
+async function withGuidesStorage(databaseOperation, fileOperation) {
+  const sql = getDatabase();
+  if (!sql) return fileOperation();
+  await ensureGuidesDatabase(sql);
   return databaseOperation(sql);
 }
 
@@ -61,6 +90,46 @@ function readFileUsers() {
 function writeFileUsers(users) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
   fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2), "utf8");
+}
+
+function readFileGuides() {
+  if (!fs.existsSync(GUIDES_FILE)) return normalizeGuides(defaultGuides);
+  const guides = JSON.parse(fs.readFileSync(GUIDES_FILE, "utf8"));
+  if (!Array.isArray(guides)) throw new Error("The local guides store must contain a JSON array.");
+  return normalizeGuides(guides);
+}
+
+function migrateLegacyGuides(guides) {
+  const legacyCategories = {
+    "bilanciamento-aero": "aerodinamica",
+    "pressioni-gomme": "pressione-pneumatici",
+    sospensioni: "sospensioni",
+    differenziale: "trasmissione",
+    "assetto-gara": "geometria-sospensioni",
+    "gestione-degrado": "pressione-pneumatici",
+  };
+  const normalized = normalizeGuides(guides);
+  if (!normalized.length || !normalized.every((guide) => Object.hasOwn(legacyCategories, guide.slug))) return null;
+
+  const contentByCategory = new Map();
+  for (const guide of normalized) {
+    const category = legacyCategories[guide.slug];
+    if (!guide.content) continue;
+    contentByCategory.set(category, [
+      contentByCategory.get(category),
+      guide.content,
+    ].filter(Boolean).join("\n\n"));
+  }
+
+  return normalizeGuides(defaultGuides.map((guide) => ({
+    ...guide,
+    content: contentByCategory.get(guide.slug) || "",
+  })));
+}
+
+function writeFileGuides(guides) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+  fs.writeFileSync(GUIDES_FILE, JSON.stringify(guides, null, 2), "utf8");
 }
 
 function sanitizeStoredImage(value) {
@@ -183,6 +252,61 @@ export async function getServerUsers() {
   return (await readUsers()).map(normalizeUser);
 }
 
+export async function getServerGuides() {
+  return withGuidesStorage(async (sql) => {
+    const rows = await sql`SELECT guides FROM mysetups_guides WHERE id = 1 LIMIT 1`;
+    if (rows[0]?.guides) {
+      const migrated = migrateLegacyGuides(rows[0].guides);
+      if (!migrated) return normalizeGuides(rows[0].guides);
+      await sql`
+        UPDATE mysetups_guides
+        SET guides = ${JSON.stringify(migrated)}::jsonb
+        WHERE id = 1
+      `;
+      return migrated;
+    }
+
+    const defaults = normalizeGuides(defaultGuides);
+    await sql`
+      INSERT INTO mysetups_guides (id, guides)
+      VALUES (1, ${JSON.stringify(defaults)}::jsonb)
+      ON CONFLICT (id) DO NOTHING
+    `;
+    const seededRows = await sql`SELECT guides FROM mysetups_guides WHERE id = 1 LIMIT 1`;
+    const seededGuides = normalizeGuides(seededRows[0]?.guides || defaults);
+    const migrated = migrateLegacyGuides(seededGuides);
+    if (!migrated) return seededGuides;
+    await sql`
+      UPDATE mysetups_guides
+      SET guides = ${JSON.stringify(migrated)}::jsonb
+      WHERE id = 1
+    `;
+    return migrated;
+  }, () => {
+    const guides = readFileGuides();
+    const migrated = migrateLegacyGuides(guides);
+    if (!migrated) return guides;
+    writeFileGuides(migrated);
+    return migrated;
+  });
+}
+
+export async function saveServerGuides(guides) {
+  const normalizedGuides = normalizeGuides(guides);
+  return withGuidesStorage(async (sql) => {
+    await sql`
+      INSERT INTO mysetups_guides (id, guides)
+      VALUES (1, ${JSON.stringify(normalizedGuides)}::jsonb)
+      ON CONFLICT (id)
+      DO UPDATE SET guides = EXCLUDED.guides
+    `;
+    return normalizedGuides;
+  }, () => {
+    writeFileGuides(normalizedGuides);
+    return normalizedGuides;
+  });
+}
+
 export async function upsertServerUser(partial) {
   if (!partial?.email) return getServerUsers();
   const email = String(partial.email).trim().toLowerCase();
@@ -288,6 +412,13 @@ export async function setServerUserRole(email, role) {
     admin: targetRole === "admin" || adminFromList,
   });
   return getServerUsers();
+}
+
+export async function setServerUserGuideAccess(email, guideAccess) {
+  const user = await findUser(email);
+  if (!user) return false;
+  await persistUser({ ...user, guideAccess: Boolean(guideAccess) });
+  return true;
 }
 
 export async function setServerUserPremium(email, premium) {

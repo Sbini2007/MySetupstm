@@ -286,6 +286,14 @@
   animation-delay: 0.54s;
 }
 
+.sm-panel-item-5 {
+  animation-delay: 0.61s;
+}
+
+.sm-panel-item-6 {
+  animation-delay: 0.68s;
+}
+
 .sm-panel-item:hover {
   color: var(--sm-accent, #8b5cf6);
   transform: translateX(8px) translateY(0) rotate(0deg);

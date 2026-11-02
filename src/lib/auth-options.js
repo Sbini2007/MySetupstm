@@ -110,6 +110,7 @@ export const authOptions = {
         if (row) {
           token.premium = Boolean(row.premium);
           token.admin = Boolean(row.admin || isAdminEmail(email));
+          token.guideAccess = Boolean(row.guideAccess || row.admin || isAdminEmail(email));
           token.role = row.role || (token.admin ? "admin" : token.premium ? "subscriber" : "user");
           const displayName = row.name && String(row.name).trim() ? String(row.name).trim() : row.oauthName || token.name;
           token.name = displayName || token.name || email.split("@")[0];
@@ -133,6 +134,7 @@ export const authOptions = {
       if (session.user) {
         session.user.premium = Boolean(token.premium);
         session.user.admin = Boolean(token.admin);
+        session.user.guideAccess = Boolean(token.guideAccess || token.admin);
         session.user.role = token.role || (token.admin ? "admin" : token.premium ? "subscriber" : "user");
         if (token.name) session.user.name = token.name;
         const safeImage = sanitizeSessionImage(token.picture);

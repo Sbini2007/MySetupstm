@@ -2,30 +2,42 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Wind, Gauge, Sliders, Activity, Shield, Flame, ArrowUpRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import NavBar from "@/components/NavBar";
 import Footer from "@/components/Footer";
 import AuthGate from "@/components/AuthGate";
-import { getGuides } from "@/lib/store";
-
-const guideIcons = [Wind, Gauge, Sliders, Activity, Shield, Flame];
 
 export default function GuidePage() {
   const [guides, setGuides] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    const sync = () => setGuides(getGuides());
-    sync();
-    window.addEventListener("mysetups:store", sync);
-    return () => window.removeEventListener("mysetups:store", sync);
+    let active = true;
+    fetch("/api/guides", { cache: "no-store" })
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Impossibile caricare le guide.");
+        if (active) setGuides(data.guides || []);
+      })
+      .catch((fetchError) => {
+        if (active) setError(fetchError.message || "Impossibile caricare le guide.");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   return (
     <div className="min-h-screen bg-[#07070a] text-zinc-100">
       <NavBar />
-      <AuthGate requirePremium>
-        <main className="mx-auto max-w-5xl px-4 pb-24 pt-12 sm:px-6">
-          <div className="mb-8">
+      <AuthGate requireGuideAccess>
+        <main className="mx-auto max-w-5xl px-4 pb-24 pt-32 sm:px-6 sm:pt-36">
+          <div className="mb-10">
             <span className="text-xs font-mono font-medium uppercase tracking-wider text-zinc-400">
               Manuale Tecnico
             </span>
@@ -33,45 +45,37 @@ export default function GuidePage() {
               Guide all'Assetto
             </h1>
             <p className="mt-2 text-xs sm:text-sm text-zinc-400 max-w-xl">
-              Spiegazioni chiare e concise su come regolare aerodinamica, sospensioni, pressioni gomme e differenziali in pista.
+              Guide alle sezioni del setup: aerodinamica, trasmissione, geometria e sospensioni, freni e pressione pneumatici.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {guides.map((guide, idx) => {
-              const Icon = guideIcons[idx % guideIcons.length];
-              return (
-                <Link
-                  key={guide.title}
-                  href={`/guide/setup?topic=${encodeURIComponent(guide.title)}`}
-                  className="group flex flex-col justify-between rounded-xl border border-white/[0.08] bg-[#0c0c10] p-5 transition hover:border-white/20 hover:bg-[#101015]"
-                >
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.04] text-zinc-300">
-                        <Icon size={16} />
-                      </div>
-                      <span className="text-[11px] font-mono text-zinc-500">0{idx + 1}</span>
-                    </div>
-
-                    <h2 className="mt-4 text-base font-semibold text-white group-hover:text-zinc-200 transition">
-                      {guide.title}
-                    </h2>
-                    <p className="mt-1.5 text-xs text-zinc-400 leading-relaxed">
-                      {guide.description}
-                    </p>
-                  </div>
-
-                  <div className="mt-6 flex items-center justify-end border-t border-white/[0.05] pt-3 text-xs">
-                    <span className="inline-flex items-center gap-1 font-medium text-zinc-400 group-hover:text-white transition">
-                      <span>Leggi</span>
-                      <ArrowUpRight size={13} />
-                    </span>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
+          {loading ? <p className="text-sm text-zinc-400">Caricamento guide…</p> : null}
+          {error ? <p role="alert" className="text-sm text-red-300">{error}</p> : null}
+          {!loading && !error ? (
+            <nav aria-label="Indice guide">
+              <ul className="divide-y divide-white/10">
+                {guides.map((guide) => (
+                  <li key={guide.slug}>
+                    <Link
+                      href={`/guide/setup?topic=${encodeURIComponent(guide.slug)}`}
+                      className="group flex items-center justify-between gap-6 py-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
+                    >
+                      <span>
+                        <span className="block text-base font-semibold text-white transition group-hover:text-violet-200">
+                          {guide.title}
+                        </span>
+                        <span className="mt-1 block text-sm leading-relaxed text-zinc-400">
+                          {guide.description}
+                        </span>
+                      </span>
+                      <ArrowRight size={17} className="shrink-0 text-zinc-500 transition group-hover:translate-x-1 group-hover:text-violet-200" aria-hidden="true" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              {!guides.length ? <p className="text-sm text-zinc-400">Non ci sono ancora guide pubblicate.</p> : null}
+            </nav>
+          ) : null}
         </main>
       </AuthGate>
       <Footer />

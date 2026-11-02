@@ -9,8 +9,9 @@ import { Lock } from "lucide-react";
  * @param {object} props
  * @param {import("react").ReactNode} props.children
  * @param {boolean} [props.requirePremium] - if true, user must have premium or admin access
+ * @param {boolean} [props.requireGuideAccess] - if true, user must have guide access or admin access
  */
-export default function AuthGate({ children, requirePremium = false }) {
+export default function AuthGate({ children, requirePremium = false, requireGuideAccess = false }) {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [ready, setReady] = useState(false);
@@ -40,7 +41,10 @@ export default function AuthGate({ children, requirePremium = false }) {
     return null;
   }
 
-  if (requirePremium && !session?.user?.premium && !session?.user?.admin) {
+  if (
+    (requirePremium && !session?.user?.premium && !session?.user?.admin) ||
+    (requireGuideAccess && !session?.user?.guideAccess && !session?.user?.admin)
+  ) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center px-4 py-20 text-white">
         <div className="max-w-md rounded-3xl border border-white/10 bg-gradient-to-b from-[#10111a] to-[#07070c] p-8 text-center shadow-2xl sm:p-10">

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
+  BookOpen,
   Map,
   Plus,
   Settings,
@@ -13,7 +14,8 @@ import {
 import NavBar from "@/components/NavBar";
 import Footer from "@/components/Footer";
 import AdminSetupEditor from "@/components/AdminSetupEditor";
-import { getGuides, getTracks, saveGuides, saveTracks } from "@/lib/store";
+import { getTracks, saveTracks } from "@/lib/store";
+import { slugifyGuideTitle } from "@/lib/guides";
 import { getUserRole } from "@/lib/rbac";
 import { safeFetchJson } from "@/lib/safe-json";
 import { useAuth } from "@/lib/client-auth";
@@ -21,6 +23,7 @@ import { useAuth } from "@/lib/client-auth";
 const tabs = [
   { id: "setups", label: "Modifica Setup", icon: Settings },
   { id: "users", label: "Utenti Iscritti", icon: UserRound },
+  { id: "guides", label: "Guide", icon: BookOpen },
   { id: "tracks", label: "Circuiti", icon: Map },
 ];
 
@@ -37,15 +40,26 @@ export default function AdminPage() {
   const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserRole, setNewUserRole] = useState("user");
   const [trackForm, setTrackForm] = useState({ country: "", circuit: "", type: "", flagCode: "it" });
-  const [guideForm, setGuideForm] = useState({ title: "", description: "" });
+  const [guideForm, setGuideForm] = useState({ title: "", description: "", content: "" });
+  const [guideError, setGuideError] = useState("");
   const [editingTrackSlug, setEditingTrackSlug] = useState(null);
-  const [editingGuideTitle, setEditingGuideTitle] = useState(null);
+  const [editingGuideSlug, setEditingGuideSlug] = useState(null);
   const [ticketReply, setTicketReply] = useState("");
   const [selectedTicketId, setSelectedTicketId] = useState(null);
   useEffect(() => {
     setTracks(getTracks());
-    setGuides(getGuides());
   }, []);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    fetch("/api/admin/guides", { cache: "no-store" })
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Impossibile caricare le guide.");
+        setGuides(data.guides || []);
+      })
+      .catch((error) => setGuideError(error.message || "Impossibile caricare le guide."));
+  }, [isAdmin]);
 
   const refreshTickets = useCallback(() => {
     safeFetchJson("/api/tickets", { credentials: "include" })
@@ -74,9 +88,22 @@ export default function AdminPage() {
     saveTracks(next);
   };
 
-  const persistGuides = (next) => {
-    setGuides(next);
-    saveGuides(next);
+  const persistGuides = async (next) => {
+    setGuideError("");
+    try {
+      const response = await fetch("/api/admin/guides", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ guides: next }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Impossibile salvare le guide.");
+      setGuides(data.guides || []);
+      return true;
+    } catch (error) {
+      setGuideError(error.message || "Impossibile salvare le guide.");
+      return false;
+    }
   };
 
   const resetTrackForm = () => {
@@ -85,8 +112,8 @@ export default function AdminPage() {
   };
 
   const resetGuideForm = () => {
-    setEditingGuideTitle(null);
-    setGuideForm({ title: "", description: "" });
+    setEditingGuideSlug(null);
+    setGuideForm({ title: "", description: "", content: "" });
   };
 
   const saveTrack = (event) => {
@@ -130,25 +157,30 @@ export default function AdminPage() {
     setTrackForm({ country: track.country, circuit: track.circuit, type: track.type, flagCode: track.flagCode || "it" });
   };
 
-  const saveGuide = (event) => {
+  const saveGuide = async (event) => {
     event.preventDefault();
-    if (!guideForm.title.trim() || !guideForm.description.trim()) return;
+    if (!guideForm.title.trim()) return;
 
-    const next = editingGuideTitle
-      ? guides.map((item) =>
-          item.title === editingGuideTitle
-            ? { title: guideForm.title.trim(), description: guideForm.description.trim() }
-            : item
-        )
-      : [...guides, { title: guideForm.title.trim(), description: guideForm.description.trim() }];
+    const updatedGuide = {
+      slug: slugifyGuideTitle(guideForm.title),
+      title: guideForm.title.trim(),
+      description: guideForm.description.trim(),
+      content: guideForm.content,
+    };
+    const next = editingGuideSlug
+      ? guides.map((item) => item.slug === editingGuideSlug ? updatedGuide : item)
+      : [...guides, updatedGuide];
 
-    persistGuides(next);
-    resetGuideForm();
+    if (await persistGuides(next)) resetGuideForm();
   };
 
   const editGuide = (guide) => {
-    setEditingGuideTitle(guide.title);
-    setGuideForm({ title: guide.title, description: guide.description });
+    setEditingGuideSlug(guide.slug);
+    setGuideForm({ title: guide.title, description: guide.description, content: guide.content || "" });
+  };
+
+  const deleteGuide = (slug) => {
+    persistGuides(guides.filter((guide) => guide.slug !== slug));
   };
 
   const patchUser = async (email, body) => {
@@ -228,13 +260,6 @@ export default function AdminPage() {
       },
     ]);
     setTrackForm({ country: "", circuit: "", type: "", flagCode: "it" });
-  };
-
-  const addGuide = (event) => {
-    event.preventDefault();
-    if (!guideForm.title.trim() || !guideForm.description.trim()) return;
-    persistGuides([...guides, { title: guideForm.title.trim(), description: guideForm.description.trim() }]);
-    setGuideForm({ title: "", description: "" });
   };
 
   const toggleAdmin = (email) => {
@@ -533,6 +558,18 @@ export default function AdminPage() {
                               <option value="admin" className="bg-[#0f1019]">Amministratore</option>
                             </select>
 
+                            <label className="inline-flex items-center gap-2 text-xs text-zinc-400">
+                              <input
+                                type="checkbox"
+                                aria-label={`Accesso Guide ${user.email}`}
+                                checked={Boolean(user.guideAccess || user.admin)}
+                                disabled={Boolean(user.admin)}
+                                onChange={(event) => patchUser(user.email, { guideAccess: event.target.checked })}
+                                className="accent-violet-400"
+                              />
+                              Accesso Guide
+                            </label>
+
                             <button
                               type="button"
                               onClick={() => deleteUser(user.email)}
@@ -552,34 +589,44 @@ export default function AdminPage() {
 
           {active === "guides" ? (
             <section className="mt-10">
-              <h2 className="text-xl font-black uppercase">Guides ({guides.length})</h2>
-              <form onSubmit={saveGuide} className="mt-5 grid gap-3 rounded-xl border border-white/10 bg-white/[0.035] p-4 md:grid-cols-[0.6fr,1fr,auto]">
+              <h2 className="text-xl font-black uppercase">Guide ({guides.length})</h2>
+              {guideError ? <p role="alert" className="mt-3 text-sm text-red-300">{guideError}</p> : null}
+              <form onSubmit={saveGuide} className="mt-5 grid gap-3 rounded-xl border border-white/10 bg-white/[0.035] p-4">
                 <input
+                  required
                   value={guideForm.title}
                   onChange={(event) => setGuideForm({ ...guideForm, title: event.target.value })}
-                  placeholder="Title"
+                  placeholder="Titolo della guida"
                   className="rounded-lg border border-white/10 bg-black/40 px-3 py-2 outline-none focus:border-violet-400/60"
                 />
                 <input
                   value={guideForm.description}
                   onChange={(event) => setGuideForm({ ...guideForm, description: event.target.value })}
-                  placeholder="Description"
+                  placeholder="Descrizione breve"
                   className="rounded-lg border border-white/10 bg-black/40 px-3 py-2 outline-none focus:border-violet-400/60"
+                />
+                <textarea
+                  value={guideForm.content}
+                  onChange={(event) => setGuideForm({ ...guideForm, content: event.target.value })}
+                  placeholder="Contenuto della guida"
+                  rows={10}
+                  maxLength={30000}
+                  className="w-full resize-y rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm leading-relaxed outline-none focus:border-violet-400/60"
                 />
                 <div className="flex items-center gap-2">
                   <button type="submit" className="rounded-lg bg-violet-500 px-4 py-2 font-bold">
-                    {editingGuideTitle ? "Save Guide" : "Add Guide"}
+                    {editingGuideSlug ? "Salva guida" : "Aggiungi guida"}
                   </button>
-                  {editingGuideTitle ? (
+                  {editingGuideSlug ? (
                     <button type="button" onClick={resetGuideForm} className="rounded-lg border border-white/10 px-4 py-2 text-sm text-white/80 hover:bg-white/5">
-                      Cancel
+                      Annulla
                     </button>
                   ) : null}
                 </div>
               </form>
               <div className="mt-5 space-y-2">
                 {guides.map((guide) => (
-                  <div key={guide.title} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/4 p-4">
+                  <div key={guide.slug} className="flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/4 p-4">
                     <div>
                       <p className="font-bold">{guide.title}</p>
                       <p className="text-sm text-white/50">{guide.description}</p>
@@ -590,12 +637,12 @@ export default function AdminPage() {
                         onClick={() => editGuide(guide)}
                         className="rounded-lg border border-white/10 px-3 py-2 text-sm text-white/80 hover:bg-white/5"
                       >
-                        Edit
+                        Modifica
                       </button>
                       <button
                         type="button"
-                        onClick={() => persistGuides(guides.filter((item) => item.title !== guide.title))}
-                        title="Delete guide"
+                        onClick={() => deleteGuide(guide.slug)}
+                        title="Elimina guida"
                         className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-red-500/20 bg-red-500/5 text-red-300 transition hover:bg-red-500/15 hover:text-red-100"
                       >
                         <Trash2 size={16} />

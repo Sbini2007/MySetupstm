@@ -5,12 +5,11 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
-  ArrowUpRight,
   Quote,
-  Users,
 } from "lucide-react";
 import NavBar from "@/components/NavBar";
 import Footer from "@/components/Footer";
+import CarSetupDiagram from "@/components/CarSetupDiagram";
 import TextType from "@/components/TextType";
 import { safeFetchJson } from "@/lib/safe-json";
 import { formatRelativeTime } from "@/lib/relative-time";
@@ -18,7 +17,6 @@ import { detailedReviews } from "@/lib/reviews";
 
 export default function HomePage() {
   const [latestUpdate, setLatestUpdate] = useState(null);
-
   // Refresh latest setup on load and after admin saves in another tab.
   useEffect(() => {
     const refreshLatestUpdate = () => {
@@ -55,7 +53,7 @@ export default function HomePage() {
         <NavBar />
 
         {/* ================= HERO SECTION ================= */}
-        <section className="relative px-4 pt-32 pb-14 sm:px-6 sm:pt-36 lg:px-8 text-center max-w-5xl mx-auto overflow-hidden">
+        <section className="relative mx-auto max-w-5xl overflow-hidden px-4 pt-36 pb-28 text-center sm:px-6 sm:pt-40 sm:pb-32 lg:px-8">
           {/* Hero Background Atmosphere */}
           <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
             <Image
@@ -69,34 +67,37 @@ export default function HomePage() {
             <div className="absolute inset-0 bg-gradient-to-b from-[#0d0b18]/45 via-[#07070a]/85 to-[#07070a]" />
           </div>
 
-          {/* Animated hero title replacing the centered logo */}
           <div className="relative mx-auto flex flex-col items-center">
-            <TextType />
+            <div className="relative mx-auto flex w-full flex-col items-center">
+              <TextType />
+              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-zinc-400 sm:text-base">
+                Assetti F1 26 e assistenza tecnica per migliorare il passo, gestire le gomme e trovare il giusto bilanciamento in ogni condizione.
+              </p>
 
-            <p className="mt-5 text-sm sm:text-base text-zinc-400 max-w-2xl mx-auto leading-relaxed">
-              Benvenuto su <strong className="text-zinc-200">MySetups</strong>, forniamo assetti di <strong className="text-zinc-200">F126</strong> e assistenza tecnica per ottimizzare le prestazioni in pista, ridurre il degrado gomma e migliorare il passo in qualsiasi condizione.
-            </p>
-
-            {/* Hero CTAs */}
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-              <Link
-                href="/setups"
-                className="home-explore-button inline-flex items-center gap-2 rounded-none border border-[#8b5cf6] bg-[#8b5cf6] px-6 py-3 text-xs font-bold text-white shadow-md shadow-black/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8b5cf6] focus-visible:ring-offset-2 focus-visible:ring-offset-[#090a12] sm:text-sm"
-              >
-                <span>Esplora i Setup</span>
-                <ArrowRight size={14} />
-              </Link>
+              <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+                <Link
+                  href="/setups"
+                  className="home-explore-button inline-flex items-center gap-2 rounded-none bg-[#8b5cf6] px-6 py-3 text-xs font-bold text-white shadow-md shadow-black/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8b5cf6] focus-visible:ring-offset-2 focus-visible:ring-offset-[#090a12] sm:text-sm"
+                >
+                  <span>Esplora i Setup</span>
+                  <ArrowRight size={14} />
+                </Link>
+              </div>
+              <CarSetupDiagram />
             </div>
           </div>
         </section>
 
-        {/* ================= SEZIONE DINAMICA "ULTIMO AGGIORNAMENTO" ================= */}
-        {latestUpdate && (
-          <section className="mx-auto max-w-6xl px-4 pb-8 sm:px-6 lg:px-8">
-            <div className="relative py-5 sm:py-6">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex min-w-0 items-center gap-4">
-                  <div className="relative h-12 w-16 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-black/40">
+        <div className="relative w-full border-t border-white/[0.06] bg-gradient-to-b from-[#0d0b18] via-[#090a12] to-[#090a12]">
+
+        <div className="flex flex-col">
+        <section aria-labelledby="latest-heading" className="order-1 mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
+          <div className="py-2">
+            <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                {latestUpdate ? (
+                  <div className="flex items-center gap-4">
+                    <div className="relative h-12 w-16 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-black/40">
                   <Image
                     src={`/flags/${latestUpdate.flagCode}.svg`}
                     alt=""
@@ -105,33 +106,61 @@ export default function HomePage() {
                     className="h-full w-full object-cover"
                   />
                 </div>
-
-                  <div className="min-w-0">
-                    <h3 className="truncate text-lg font-bold text-white sm:text-xl">
-                      {latestUpdate.circuit}
-                    </h3>
-                    <p className="mt-1 text-xs font-medium text-zinc-400">
-                      {latestUpdate.country}
-                    </p>
+                    <div className="min-w-0">
+                      <h3 className="truncate text-lg font-bold text-white">{latestUpdate.circuit}</h3>
+                      <p className="mt-1 text-xs font-medium text-zinc-400">{latestUpdate.country}</p>
+                      <p className="mt-1 text-xs text-zinc-500">{formattedUpdateDate}</p>
+                    </div>
                   </div>
-                </div>
-
-                <span className="w-fit shrink-0 text-xs font-medium text-zinc-400">
-                  {formattedUpdateDate}
-                </span>
+                ) : (
+                  <p className="mt-3 text-sm text-zinc-400">Scopri gli assetti disponibili per preparare il prossimo weekend di gara.</p>
+                )}
               </div>
-              <div
-                aria-hidden="true"
-                className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-violet-400 to-transparent shadow-[0_0_3px_rgba(167,139,250,0.55)]"
-              />
+              <Link
+                href="/setups"
+                className="home-setups-cta inline-flex w-fit shrink-0 items-center text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
+              >
+                <span className="home-setups-cta__label">Tutti i setup</span>
+                <ArrowRight className="home-setups-cta__icon" size={16} aria-hidden="true" />
+              </Link>
             </div>
-          </section>
-        )}
+          </div>
+        </section>
 
-        {/* ================= FEEDBACK DEI PILOTI ================= */}
-        <section className="mx-auto max-w-6xl px-4 pb-4 pt-8 sm:px-6 lg:px-8">
-          <div className="mb-5">
-            <h2 className="text-xl font-black tracking-tight text-white sm:text-2xl">
+        <section aria-labelledby="categories-heading" className="order-2 mx-auto w-full max-w-6xl px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
+          <div className="mb-8 max-w-2xl">
+            <h2 id="categories-heading" className="text-2xl font-black tracking-tight text-white sm:text-3xl">
+              Tutto quello che ti serve per la pista
+            </h2>
+            <p className="mt-3 text-sm leading-relaxed text-zinc-400">
+              Setup e guide per capire e perfezionare il tuo assetto.
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {[
+              { title: "Setup", description: "Assetti pronti da provare e perfezionare.", href: "/setups" },
+              { title: "Guide", description: "Consigli pratici per capire e migliorare ogni assetto.", href: "/guide" },
+            ].map(({ title, description, href }) => (
+              <Link
+                key={title}
+                href={href}
+                className="group rounded-xl border border-white/10 bg-white/[0.025] p-6 transition-colors hover:border-violet-300/40 hover:bg-violet-500/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
+              >
+                <h3 className="mt-5 text-lg font-bold text-white">{title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-zinc-400">{description}</p>
+                <span className="mt-5 inline-flex items-center gap-2 text-xs font-bold text-violet-200">
+                  Scopri di più <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+        </div>
+
+        <section aria-labelledby="reviews-heading" className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
+          <div className="mb-7">
+            <h2 id="reviews-heading" className="text-xl font-black tracking-tight text-white sm:text-2xl">
               Feedback dei Piloti
             </h2>
           </div>
@@ -168,39 +197,40 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ================= INTEGRAZIONE COMMUNITY DISCORD ================= */}
-        <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
-          <div className="relative py-5 sm:py-6">
-            <div className="mb-6 h-px bg-gradient-to-r from-transparent via-violet-500 to-transparent shadow-[0_0_3px_rgba(82,39,255,0.55)]" aria-hidden="true" />
-            <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
-              <div className="max-w-xl">
-                <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
-                  Entra nel Discord di MySetups
-                </h2>
-
-                <p className="mt-3 text-xs sm:text-sm text-zinc-400 leading-relaxed">
-                  Confrontati direttamente con i nostri piloti. Ricevi notifiche in tempo reale al rilascio di nuovi assetti dopo ogni patch ufficiale di F1 26 e assistenza sui setup in caso di necessità.
-                </p>
-              </div>
-
-              <div className="shrink-0 flex flex-col items-start sm:items-center gap-3">
-                <a
-                  href="https://discord.gg/YzVN3ncCwR"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="group inline-flex items-center justify-center gap-2.5 rounded-2xl bg-[#5865F2] px-8 py-4 text-sm font-bold text-white shadow-lg shadow-[#5865F2]/20 transition duration-200 hover:-translate-y-0.5 hover:bg-[#4752c4] hover:shadow-[#5865F2]/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#aab0ff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#090a12] motion-reduce:transform-none motion-reduce:transition-none"
-                >
-                  <Users size={18} />
-                  <span>Unisciti alla Community Discord</span>
-                  <ArrowUpRight size={16} className="transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 motion-reduce:transition-none" />
-                </a>
-                <span className="text-[11px] text-zinc-500 font-mono">
-                  Accesso gratuito aperto a tutti i piloti
-                </span>
-              </div>
+        <section aria-labelledby="community-heading" className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
+          <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
+            <div className="max-w-xl">
+              <h2 id="community-heading" className="text-2xl font-extrabold tracking-tight text-white sm:text-4xl">
+                Entra nel Discord di MySetups
+              </h2>
+              <p className="mt-3 text-sm leading-relaxed text-zinc-400">
+                Confrontati con gli altri piloti, ricevi gli aggiornamenti sui nuovi assetti e chiedi supporto alla community.
+              </p>
             </div>
+
+            <a
+              href="https://discord.gg/YzVN3ncCwR"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Unisciti alla community MySetups su Discord"
+              className="group relative inline-flex h-13 w-36 shrink-0 items-center justify-center rounded-[15px] bg-[#5865F2] text-base font-black text-white fill-white hover:bg-[#5865F2] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#aab0ff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#090a12] motion-reduce:transition-none"
+            >
+              <span className="absolute left-4 top-1/2 flex -translate-y-1/2 items-center justify-center transition-[left,transform] duration-500 ease-in-out group-hover:left-1/2 group-hover:-translate-x-1/2 group-focus-visible:left-1/2 group-focus-visible:-translate-x-1/2 motion-reduce:transition-none">
+                <svg
+                  aria-hidden="true"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  className="h-6 w-6 shrink-0 origin-center transition-transform duration-300 ease-in-out group-hover:scale-110 group-focus-visible:scale-110 motion-reduce:transition-none"
+                >
+                  <path d="M19.73 5.19a18.2 18.2 0 0 0-4.47-1.38.07.07 0 0 0-.07.04c-.19.34-.4.79-.55 1.14a16.8 16.8 0 0 0-5.03 0 11.6 11.6 0 0 0-.56-1.14.07.07 0 0 0-.07-.04 18.15 18.15 0 0 0-4.47 1.38.06.06 0 0 0-.03.03C1.6 9.35.82 13.38 1.21 17.36a.08.08 0 0 0 .03.05 18.3 18.3 0 0 0 5.48 2.77.07.07 0 0 0 .08-.03c.42-.57.79-1.17 1.11-1.8a.07.07 0 0 0-.04-.1 12.1 12.1 0 0 1-1.71-.82.07.07 0 0 1-.01-.11l.34-.27a.07.07 0 0 1 .07-.01c3.59 1.64 7.48 1.64 11.03 0a.07.07 0 0 1 .07.01l.34.27a.07.07 0 0 1-.01.11c-.55.32-1.12.6-1.71.82a.07.07 0 0 0-.04.1c.33.63.7 1.23 1.11 1.8a.07.07 0 0 0 .08.03 18.25 18.25 0 0 0 5.49-2.77.07.07 0 0 0 .03-.05c.47-4.6-.79-8.6-3.27-12.14a.06.06 0 0 0-.03-.03ZM8.31 14.6c-1.08 0-1.97-.99-1.97-2.2s.87-2.2 1.97-2.2c1.11 0 1.99 1 1.97 2.2 0 1.21-.87 2.2-1.97 2.2Zm7.38 0c-1.08 0-1.97-.99-1.97-2.2s.87-2.2 1.97-2.2c1.11 0 1.99 1 1.97 2.2 0 1.21-.86 2.2-1.97 2.2Z" />
+                </svg>
+              </span>
+              <span className="flex h-full w-full translate-x-3 items-center justify-center transition-opacity duration-500 ease-in-out group-hover:opacity-0 group-focus-visible:opacity-0 motion-reduce:transition-none">Partecipa</span>
+            </a>
           </div>
         </section>
+
+        </div>
       </div>
 
       <Footer />

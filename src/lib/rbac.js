@@ -44,6 +44,12 @@ export function canAccessSetups(user) {
   return false;
 }
 
+export function canAccessGuides(user) {
+  if (!user) return false;
+  if (user.admin || isAdminEmail(user.email)) return true;
+  return Boolean(user.guideAccess);
+}
+
 /**
  * Checks if a user can create/edit/duplicate/delete setups in admin dashboard.
  */

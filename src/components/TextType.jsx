@@ -58,7 +58,7 @@ export default function TextType() {
   return (
     <h1
       aria-label={`${PREFIX}${WORDS.join(", ")}`}
-      className="min-h-[1.2em] text-4xl font-black tracking-tight text-white sm:text-6xl"
+      className="min-h-[1.2em] text-2xl font-black tracking-tight text-white sm:text-4xl"
     >
       <span className="text-zinc-400">{PREFIX}</span>
       <span

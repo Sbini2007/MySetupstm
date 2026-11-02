@@ -17,7 +17,7 @@ import { useAuth } from "@/lib/client-auth";
 import "./StaggeredMenu.css";
 
 export default function NavBar() {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, canAccessGuides } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -66,6 +66,7 @@ export default function NavBar() {
   const navItems = [
     { label: "Home", href: "/", isExternal: false },
     { label: "Setup", href: "/setups", isExternal: false },
+    ...(canAccessGuides ? [{ label: "Guide", href: "/guide", isExternal: false }] : []),
     { label: "Discord", href: "https://discord.gg/YzVN3ncCwR", isExternal: true },
     { label: "Account", href: "/account", isExternal: false },
     ...(isAdmin ? [{ label: "Admin", href: "/admin", isExternal: false }] : []),
@@ -111,6 +112,14 @@ export default function NavBar() {
             >
               SETUP
             </Link>
+            {canAccessGuides ? (
+              <Link
+                href="/guide"
+                className="hover:text-violet-400 transition duration-150 py-1"
+              >
+                GUIDE
+              </Link>
+            ) : null}
             <a
               href="https://discord.gg/YzVN3ncCwR"
               target="_blank"

@@ -43,12 +43,12 @@ export const reviews = [
 ];
 
 export const guides = [
-  { title: "Bilanciamento aero", description: "Trova la finestra giusta tra punta, stabilita e carico nelle curve veloci." },
-  { title: "Pressioni gomme", description: "Regola le pressioni per grip iniziale, temperatura e durata dello stint." },
-  { title: "Sospensioni", description: "Costruisci una vettura prevedibile in ingresso, centro curva e trazione." },
-  { title: "Differenziale", description: "Ottimizza rotazione e uscita curva tra qualifica e gara." },
-  { title: "Assetto gara", description: "Trasforma il giro secco in passo costante e meno consumo gomme." },
-  { title: "Gestione degrado", description: "Leggi i segnali delle gomme e correggi lo stile di guida." },
+  { title: "Aerodinamica", description: "Regola ali e carico per trovare il giusto equilibrio tra velocità e aderenza in curva." },
+  { title: "Trasmissione", description: "Imposta il differenziale in trazione e in rilascio per gestire rotazione e stabilità." },
+  { title: "Geometria sospensioni", description: "Comprendi campanatura e convergenza e il loro effetto su grip e usura degli pneumatici." },
+  { title: "Sospensioni", description: "Regola sospensioni, barre antirollio e altezza da terra per controllare la vettura sui cordoli e in curva." },
+  { title: "Pressione freni", description: "Scegli la pressione di frenata e la ripartizione per frenare con efficacia senza perdere stabilità." },
+  { title: "Pressione pneumatici", description: "Regola la pressione delle gomme per bilanciare aderenza, temperatura e durata." },
 ];
 
 export const setups = {

@@ -5,6 +5,7 @@ import {
   deleteServerUser,
   getServerUsers,
   setServerUserAdminFlag,
+  setServerUserGuideAccess,
   setServerUserPremium,
   setServerUserRole,
   upsertServerUser,
@@ -34,20 +35,22 @@ export async function PATCH(request) {
     return NextResponse.json({ error: "Invalid body" }, { status: 400 });
   }
 
-  const { email, premium, admin, role } = body;
+  const { email, premium, admin, role, guideAccess } = body;
   if (!email || typeof email !== "string") {
     return NextResponse.json({ error: "Missing email" }, { status: 400 });
   }
 
   if (typeof role === "string") {
     await setServerUserRole(email, role);
-  } else {
-    if (typeof premium === "boolean") {
-      await setServerUserPremium(email, premium);
-    }
-    if (typeof admin === "boolean") {
-      await setServerUserAdminFlag(email, admin);
-    }
+  }
+  if (typeof premium === "boolean") {
+    await setServerUserPremium(email, premium);
+  }
+  if (typeof admin === "boolean") {
+    await setServerUserAdminFlag(email, admin);
+  }
+  if (typeof guideAccess === "boolean") {
+    await setServerUserGuideAccess(email, guideAccess);
   }
 
   return NextResponse.json({ users: await getServerUsers() });

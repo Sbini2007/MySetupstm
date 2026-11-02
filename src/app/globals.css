@@ -182,6 +182,131 @@
   animation: explore-button-scale 0.3s ease-in-out;
 }
 
+.home-setups-cta {
+  gap: 0.25rem;
+  cursor: pointer;
+}
+
+.home-setups-cta__label {
+  position: relative;
+  padding: 0 15px 7px 0;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.home-setups-cta__label::after {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: #a78bfa;
+  content: "";
+  transform: scaleX(0);
+  transform-origin: bottom right;
+  transition: transform 0.25s ease-out;
+}
+
+.home-setups-cta:hover .home-setups-cta__label::after,
+.home-setups-cta:focus-visible .home-setups-cta__label::after {
+  transform: scaleX(1);
+  transform-origin: bottom left;
+}
+
+.home-setups-cta__icon {
+  transform: translateX(-8px);
+  transition: transform 0.3s ease;
+}
+
+.home-setups-cta:hover .home-setups-cta__icon,
+.home-setups-cta:focus-visible .home-setups-cta__icon {
+  transform: translateX(0);
+}
+
+.home-setups-cta:active .home-setups-cta__icon {
+  transform: scale(0.9);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-setups-cta__label::after,
+  .home-setups-cta__icon {
+    transition: none;
+  }
+}
+
+.home-car-diagram__desktop {
+  isolation: isolate;
+  container-type: inline-size;
+}
+
+.home-car-diagram__line {
+  stroke: #d4d4d8;
+  stroke-width: clamp(0.4px, 0.104cqw, 1px);
+  stroke-linecap: butt;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.home-car-diagram__point {
+  z-index: 1;
+  width: clamp(0.25rem, 0.833cqw, 0.5rem);
+  height: clamp(0.25rem, 0.833cqw, 0.5rem);
+  border: clamp(1px, 0.208cqw, 2px) solid rgba(255, 255, 255, 0.35);
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 clamp(4px, 1.042cqw, 10px) rgba(255, 255, 255, 0.55);
+  transform: translate(-50%, -50%);
+}
+
+.home-car-diagram__label {
+  z-index: 1;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.5cqw;
+  border: none;
+  background: transparent;
+  padding: 0.333cqw 0.75cqw;
+  color: #d4d4d8;
+  font-size: clamp(0.3rem, 0.917cqw, 0.75rem);
+  font-weight: 700;
+  letter-spacing: 0.075em;
+  line-height: 1.25;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transform: translateY(-50%);
+  transition: color 400ms cubic-bezier(0.25, 0.8, 0.25, 1);
+  text-shadow: none;
+}
+
+.home-car-diagram__label::after {
+  position: absolute;
+  bottom: -0.208cqw;
+  left: 50%;
+  width: 0;
+  height: 0.208cqw;
+  background: #d4d4d8;
+  content: "";
+  pointer-events: none;
+  transition:
+    width 400ms cubic-bezier(0.25, 0.8, 0.25, 1),
+    left 400ms cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.home-car-diagram__label:hover::after,
+.home-car-diagram__label:focus-visible::after {
+  left: 0;
+  width: 100%;
+}
+
+.home-car-diagram__label:focus-visible,
+.home-car-diagram__point:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.75);
+  outline-offset: 3px;
+}
+
 @keyframes explore-button-pulse {
   0%,
   100% {
@@ -217,5 +342,11 @@
   .home-explore-button > svg {
     transition: none;
     animation: none;
+  }
+
+  .home-car-diagram__point,
+  .home-car-diagram__label,
+  .home-car-diagram__label::after {
+    transition: none;
   }
 }
